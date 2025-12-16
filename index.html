@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Docente - Intranet Escolar</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --primary-color: #157347; --secondary-color: #0b4129; --bg-color: #f0f4f3; }
+        body { background-color: var(--bg-color); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
+        
+        .hero { 
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%); 
+            color: white; padding: 3rem 1rem; text-align: center; 
+            border-bottom-left-radius: 40px; border-bottom-right-radius: 40px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15); margin-bottom: 2.5rem; position: relative; 
+        }
+        
+        .app-card { background: white; border: none; border-radius: 20px; padding: 30px 20px; transition: all 0.3s; text-decoration: none; color: #495057; height: 100%; display: flex; flex-direction: column; align-items: center; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
+        .app-card:hover { transform: translateY(-8px); box-shadow: 0 15px 30px rgba(21, 115, 71, 0.15); }
+        .icon-wrapper { width: 70px; height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; margin-bottom: 1.2rem; background-color: #e8f5e9; color: #198754; transition: 0.3s; }
+        .app-title { font-weight: 700; font-size: 1.1rem; margin-bottom: 0.5rem; color: #212529; }
+        .app-desc { font-size: 0.85rem; color: #6c757d; line-height: 1.4; }
+        
+        .back-btn { position: absolute; top: 20px; left: 20px; color: white; text-decoration: none; font-weight: 600; opacity: 0.9; font-size: 0.9rem; padding: 8px 15px; border-radius: 20px; background: rgba(255,255,255,0.15); backdrop-filter: blur(5px); transition: all 0.2s; }
+        .back-btn:hover { background: rgba(255,255,255,0.25); color: white; opacity: 1; }
+        .footer { margin-top: auto; padding: 30px; text-align: center; color: #adb5bd; font-size: 0.8rem; }
+    </style>
+</head>
+<body>
+
+    <div class="hero">
+        <div class="container">
+            <a href="index.html" class="back-btn"><i class="fa-solid fa-arrow-left me-1"></i> Salir</a>
+            
+            <h1 class="fw-bold mb-1 display-5">Portal Docente</h1>
+            <p class="mb-0 opacity-90 fw-light fs-5">Herramientas de Gestión Pedagógica</p>
+        </div>
+    </div>
+
+    <div class="container mb-5">
+        <div class="row g-4 justify-content-center">
+            
+            <div class="col-6 col-md-4 col-lg-3">
+                <a href="bitacora.html" class="app-card">
+                    <div class="icon-wrapper"><i class="fa-solid fa-book-open"></i></div>
+                    <div class="app-title">Bitácora Digital</div>
+                    <div class="app-desc">Planificación y registro de cobertura curricular.</div>
+                </a>
+            </div>
+
+            <div class="col-6 col-md-4 col-lg-3">
+                <a href="calculadora_notas.html" class="app-card">
+                    <div class="icon-wrapper"><i class="fa-solid fa-calculator"></i></div>
+                    <div class="app-title">Calculadora Notas</div>
+                    <div class="app-desc">Escalas, rúbricas y promedios ponderados.</div>
+                </a>
+            </div>
+
+            <div class="col-6 col-md-4 col-lg-3">
+                <a href="repitencia.html" class="app-card">
+                    <div class="icon-wrapper"><i class="fa-solid fa-file-contract"></i></div>
+                    <div class="app-title">Gestor Decreto 67</div>
+                    <div class="app-desc">Actas de evaluación, repitencia y tutorías.</div>
+                </a>
+            </div>
+
+            <div class="col-6 col-md-4 col-lg-3">
+                <a href="salva.html" class="app-card">
+                    <div class="icon-wrapper"><i class="fa-solid fa-life-ring"></i></div>
+                    <div class="app-title">Salva el Semestre</div>
+                    <div class="app-desc">Proyección de promedios para cierre de año.</div>
+                </a>
+            </div>
+
+            <div class="col-6 col-md-4 col-lg-3">
+                <a href="nem.html" class="app-card">
+                    <div class="icon-wrapper"><i class="fa-solid fa-ranking-star"></i></div>
+                    <div class="app-title">Calculadora NEM</div>
+                    <div class="app-desc">Estimación de puntaje ranking y NEM.</div>
+                </a>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="footer">
+        <p class="mb-1">Sistema de Gestión Curricular Integrado</p>
+        <p class="mb-0 small text-secondary">Desarrollado por <span class="fw-bold text-success">ProfeAle</span> &copy; 2025</p>
+    </div>
+
+</body>
+</html>
