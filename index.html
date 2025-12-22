@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal Docente -2026</title>
+    <title>Portal Docente - 2026</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -17,25 +17,29 @@
         }
         body { background-color: var(--bg-color); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
         
-        /* HEADER (Estilo Maestro) */
+        /* HEADER DOCENTE */
         .main-header {
-            background: linear-gradient(90deg, #1a1a1a 0%, #157347 100%); /* Gradiente Negro a Verde */
-            color: white; padding: 1rem 0; margin-bottom: 2rem; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            background: linear-gradient(90deg, #2c3e50 0%, #198754 100%); /* Gris oscuro a Verde */
+            color: white; padding: 1.5rem 0; margin-bottom: 2rem; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
-        .school-logo { height: 60px; margin-right: 15px; border: 2px solid rgba(255,255,255,0.2); border-radius: 50%; padding: 2px; }
+        .school-logo { height: 70px; margin-right: 20px; border: 2px solid rgba(255,255,255,0.2); border-radius: 50%; padding: 2px; }
         
-        /* RELOJ DIGITAL */
+        /* RELOJ DIGITAL GRANDE */
         .clock-widget {
             font-variant-numeric: tabular-nums;
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: #ffffff;
-            letter-spacing: 1px;
+            font-size: 3rem; /* Tamaño muy grande */
+            font-weight: 300; /* Fuente fina y elegante */
+            line-height: 1;
+            letter-spacing: -1px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
-        .user-name {
-            font-size: 1.3rem;
-            font-weight: 800;
-            color: white;
+        .header-subtitle {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            opacity: 0.8;
+            font-weight: 600;
+            margin-bottom: 5px;
         }
 
         /* SECCIONES */
@@ -72,15 +76,12 @@
         }
 
         /* ESTILOS POR ZONA */
-        /* Zona Aula (Verde) */
         .border-aula:hover { border-top: 3px solid var(--mod-aula); }
         .icon-aula { background-color: #d1e7dd; color: var(--mod-aula); }
 
-        /* Zona Eval (Azul) */
         .border-eval:hover { border-top: 3px solid var(--mod-eval); }
         .icon-eval { background-color: #cfe2ff; color: var(--mod-eval); }
 
-        /* Zona Orient (Rosa) */
         .border-orient:hover { border-top: 3px solid var(--mod-orient); }
         .icon-orient { background-color: #f7d6e6; color: var(--mod-orient); }
 
@@ -94,14 +95,14 @@
             <div class="d-flex align-items-center">
                 <img src="logo.jpg" alt="SS.CC." class="school-logo">
                 <div>
-                    <h1 class="h5 fw-bold mb-0">Portal Docente</h1>
-                    <span class="badge bg-success rounded-pill">Aula 2026</span>
+                    <h1 class="h4 fw-bold mb-0">Portal Docente</h1>
+                    <span class="badge bg-light text-dark opacity-75">Intranet 2026</span>
                 </div>
             </div>
-            <div class="text-end d-none d-md-block text-white-50">
-                <div class="user-name">ProfeAle</div>
-                <div id="live-clock" class="clock-widget my-1">--:--:--</div>
-                <div id="date-display" class="small opacity-75"></div>
+            <div class="text-end d-none d-md-block text-white">
+                <div class="header-subtitle">Sala de Profesores</div>
+                <div id="live-clock" class="clock-widget">--:--</div>
+                <div id="date-display" class="small opacity-75 mt-1"></div>
             </div>
         </div>
     </header>
@@ -118,7 +119,7 @@
                         <div class="app-icon icon-aula"><i class="fa-solid fa-clipboard-user"></i></div>
                         <div class="app-info">
                             <h5>Mi Clase (Asistencia)</h5>
-                            <p>Registro de asistencia diaria y calificaciones rápidas.</p>
+                            <p>Registro de asistencia diaria y calificaciones.</p>
                         </div>
                     </div>
                 </a>
@@ -130,7 +131,7 @@
                         <div class="app-icon icon-aula"><i class="fa-solid fa-book-open"></i></div>
                         <div class="app-info">
                             <h5>Bitácora Digital</h5>
-                            <p>Planificación de clases y cobertura curricular.</p>
+                            <p>Planificación de clases y cobertura.</p>
                         </div>
                     </div>
                 </a>
@@ -215,9 +216,13 @@
     <script>
         function updateHeaderInfo() {
             const now = new Date();
-            document.getElementById('live-clock').textContent = now.toLocaleTimeString('es-CL');
+            // Formato de hora corto (HH:MM) para el reloj grande
+            document.getElementById('live-clock').textContent = now.toLocaleTimeString('es-CL', {hour: '2-digit', minute:'2-digit'});
+            
             const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            document.getElementById('date-display').textContent = now.toLocaleDateString('es-ES', dateOptions);
+            // Capitalizar la primera letra de la fecha
+            const dateString = now.toLocaleDateString('es-ES', dateOptions);
+            document.getElementById('date-display').textContent = dateString.charAt(0).toUpperCase() + dateString.slice(1);
         }
         setInterval(updateHeaderInfo, 1000);
         updateHeaderInfo(); 
