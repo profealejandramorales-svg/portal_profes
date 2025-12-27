@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Préstamo de Recursos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .resource-box { 
+            transition: all 0.2s; 
+            cursor: pointer; 
+            user-select: none;
+        }
+        .resource-box:active { transform: scale(0.95); }
+        
+        /* Estados visuales */
+        .status-available { background-color: #10b981; color: white; border: 2px solid #059669; }
+        .status-loaned { background-color: #ef4444; color: white; border: 2px solid #b91c1c; }
+        .status-maintenance { background-color: #f59e0b; color: white; border: 2px solid #d97706; }
+        .status-selected { ring: 4px solid #3b82f6; transform: scale(1.05); z-index: 10; }
+
+        .modal { background-color: rgba(0,0,0,0.5); }
+        
+        /* Pestañas */
+        .tab-active { background-color: #1f2937; color: white; }
+        .tab-inactive { background-color: #e5e7eb; color: #4b5563; }
+
+        /* Impresión */
+        @media print {
+            @page { size: Letter landscape; margin: 1cm; }
+            body * { visibility: hidden; }
+            #report-area, #report-area * { visibility: visible; }
+            #report-area { position: absolute; top: 0; left: 0; width: 100%; }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-4 md:p-8">
+
+    <div id="message-box" class="fixed top-5 right-5 bg-blue-600 text-white px-6 py-3 rounded shadow-lg hidden transition-opacity z-50"></div>
+
+    <div class="max-w-7xl mx-auto no-print">
+        
+        <div class="bg-white p-4 rounded-xl shadow-sm border-b-4 border-gray-800 flex flex-col md:flex-row items-center justify-between mb-6">
+            <div class="flex items-center gap-4">
+                <img src="logo.jpg" class="h-16 w-auto object-contain bg-gray-50 rounded-full p-1 border" onerror="this.style.display='none'">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-800">Sistema de Préstamo</h1>
+                    <p class="text-xs text-gray-500 font-medium">Tablets UTP y Laboratorio de Computación</p>
+                </div>
+            </div>
+            
+            <div class="flex gap-4 mt-4 md:mt-0">
+                <div class="text-center px-4 border-r">
+                    <span class="block text-2xl font-bold text-green-600" id="count-available">0</span>
+                    <span class="text-xs text-gray-500 uppercase">Disponibles</span>
+                </div>
+                <div class="text-center px-4 border-r">
+                    <span class="block text-2xl font-bold text-red-600" id="count-loaned">0</span>
+                    <span class="text-xs text-gray-500 uppercase">En Préstamo</span>
+                </div>
+                <div class="text-center px-4">
+                    <span class="block text-2xl font-bold text-orange-500" id="count-maint">0</span>
+                    <span class="text-xs text-gray-500 uppercase">Mantención</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex mb-4">
+            <button onclick="switchResource('tablets')" id="tab-tablets" class="flex-1 py-3 font-bold text-center rounded-l-xl tab-active transition">
+                📱 Tablets Móviles (UTP)
+            </button>
+            <button onclick="switchResource('computers')" id="tab-computers" class="flex-1 py-3 font-bold text-center rounded-r-xl tab-inactive transition">
+                💻 Laboratorio Computación
+            </button>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl shadow mb-6 flex flex-wrap gap-4 items-center justify-between">
+            <div class="flex items-center gap-2">
+                <p class="text-sm font-bold text-gray-700 mr-2">Selección Rápida:</p>
+                <button onclick="selectAll()" class="text-xs bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded text-gray-700 font-bold">Todos</button>
+                <button onclick="selectRange(1, 20)" class="text-xs bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded text-gray-700 font-bold">1-20</button>
+                <button onclick="selectRange(21, 45)" class="text-xs bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded text-gray-700 font-bold">21-45</button>
+                <button onclick="clearSelection()" class="text-xs text-red-500 hover:text-red-700 px-3 py-1 font-bold underline">Limpiar</button>
+            </div>
+
+            <div class="flex gap-2">
+                <button id="btn-loan" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow disabled:opacity-50 disabled:cursor-not-allowed text-xs md:text-sm" disabled>
+                    Prestar Seleccionadas (<span id="sel-count">0</span>)
+                </button>
+                <button id="btn-return-mass" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded shadow disabled:opacity-50 disabled:cursor-not-allowed text-xs md:text-sm" disabled>
+                    Devolver / Liberar
+                </button>
+                <button id="btn-maintenance" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded shadow disabled:opacity-50 disabled:cursor-not-allowed text-xs md:text-sm" disabled>
+                    Reportar Daño
+                </button>
+            </div>
+        </div>
+
+        <div id="grid-container" class="grid grid-cols-5 md:grid-cols-8 lg:grid-cols-10 gap-3 mb-8">
+            <div class="col-span-full text-center py-10 text-gray-400">Cargando equipos...</div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow border-t-4 border-indigo-500 mb-8">
+            <h3 class="font-bold text-indigo-800 mb-4 flex items-center gap-2">
+                📊 Generar Reporte de Uso
+            </h3>
+            <div class="flex flex-wrap gap-4 items-end">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Desde</label>
+                    <input type="date" id="report-start" class="border p-2 rounded text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Hasta</label>
+                    <input type="date" id="report-end" class="border p-2 rounded text-sm">
+                </div>
+                <button id="btn-generate-report" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded shadow">
+                    Generar Reporte
+                </button>
+            </div>
+        </div>
+
+        <div class="mt-8 text-center border-t pt-4">
+            <p class="text-xs text-gray-400 font-medium">Desarrollado por ProfeAle</p>
+        </div>
+
+    </div>
+
+    <div id="report-area" class="hidden bg-white p-8 max-w-7xl mx-auto shadow-2xl mb-10">
+        <div class="flex justify-between items-center mb-6 border-b pb-4">
+            <div class="flex items-center gap-4">
+                <img src="logo.jpg" class="h-16 w-auto object-contain">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800">Reporte de Uso de Recursos</h2>
+                    <p class="text-sm text-gray-500" id="report-dates"></p>
+                </div>
+            </div>
+            <button onclick="window.print()" class="no-print bg-gray-800 text-white px-4 py-2 rounded font-bold">Imprimir</button>
+            <button onclick="document.getElementById('report-area').classList.add('hidden')" class="no-print text-red-500 font-bold ml-4">Cerrar</button>
+        </div>
+        <table class="w-full text-sm text-left border-collapse">
+            <thead>
+                <tr class="bg-gray-100 text-gray-600 uppercase text-xs border-b border-gray-300">
+                    <th class="p-3 border">Fecha/Hora</th>
+                    <th class="p-3 border">Recurso</th>
+                    <th class="p-3 border">Acción</th>
+                    <th class="p-3 border">Equipos</th>
+                    <th class="p-3 border">Responsable</th>
+                    <th class="p-3 border">Curso</th>
+                </tr>
+            </thead>
+            <tbody id="report-body"></tbody>
+        </table>
+    </div>
+
+    <div id="loan-modal" class="modal fixed inset-0 flex items-center justify-center hidden z-50">
+        <div class="bg-white p-6 rounded-lg shadow-2xl w-full max-w-md">
+            <h2 class="text-xl font-bold mb-4 text-gray-800">Registrar Préstamo</h2>
+            <p class="text-sm text-gray-500 mb-4">Vas a asignar <span id="modal-qty" class="font-bold">0</span> equipos del inventario: <strong id="modal-resource-name"></strong>.</p>
+            
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Curso</label>
+                    <select id="modal-course" class="w-full border p-2 rounded"></select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Profesor Responsable</label>
+                    <input type="text" id="modal-teacher" class="w-full border p-2 rounded" placeholder="Docente a cargo">
+                </div>
+                <div class="bg-blue-50 p-2 rounded border border-blue-100">
+                    <label class="block text-xs font-bold text-blue-800 uppercase mb-1">Alumno (Opcional)</label>
+                    <input type="text" id="modal-student" class="w-full border p-2 rounded bg-white text-sm" placeholder="Dejar en blanco si es préstamo masivo">
+                </div>
+            </div>
+
+            <div class="mt-6 flex justify-end gap-3">
+                <button onclick="closeModal()" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded">Cancelar</button>
+                <button id="confirm-loan-btn" class="px-4 py-2 bg-blue-600 text-white font-bold rounded hover:bg-blue-700">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, doc, setDoc, onSnapshot, updateDoc, addDoc, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+        const firebaseConfig = { apiKey: "AIzaSyBnSMVCH0yyYUWk5z54kTIPTrWkyoeWs-I", authDomain: "suspenciones-40d0c.firebaseapp.com", projectId: "suspenciones-40d0c", storageBucket: "suspenciones-40d0c.firebasestorage.app", messagingSenderId: "853418739042", appId: "1:853418739042:web:d051befb99cd2acdd4583b" };
+        
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        
+        const RESOURCES = {
+            'tablets': { id: 'tablets', name: 'Tablets UTP', collection: 'inventario_tablets', total: 45, prefix: 'T', icon: '📱' },
+            'computers': { id: 'computers', name: 'PCs Lab', collection: 'inventario_computers', total: 40, prefix: 'PC', icon: '💻' }
+        };
+
+        const COLL_LOGS = "inventario_logs";
+        let currentRes = RESOURCES['tablets']; 
+        let tabletsData = {}; 
+        let selectedIds = new Set();
+        let unsubscribe = null;
+
+        const schoolData = {
+            'Primero Medio A': [], 'Primero Medio B': [], 'Segundo Medio A': [], 'Segundo Medio B': [],
+            'Tercero Medio A': [], 'Tercero Medio C': [], 'Cuarto Medio A': [], 'Cuarto Medio C': [],
+            'Sala de Profesores': [], 'Biblioteca': []
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            signInAnonymously(auth).then(() => {
+                loadResource(currentRes.id);
+            });
+
+            const sel = document.getElementById('modal-course');
+            for(const c in schoolData) {
+                const opt = document.createElement('option'); opt.value = c; opt.textContent = c; sel.appendChild(opt);
+            }
+
+            document.getElementById('btn-loan').addEventListener('click', openLoanModal);
+            document.getElementById('confirm-loan-btn').addEventListener('click', executeLoan);
+            document.getElementById('btn-maintenance').addEventListener('click', setMaintenance);
+            document.getElementById('btn-return-mass').addEventListener('click', returnSelected); // Nuevo botón masivo
+            document.getElementById('btn-generate-report').addEventListener('click', generateReport);
+
+            // Fechas reporte
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('report-start').value = today;
+            document.getElementById('report-end').value = today;
+
+            window.switchResource = switchResource;
+            window.selectAll = () => selectRange(1, currentRes.total);
+            window.selectRange = (start, end) => {
+                clearSelection();
+                for(let i=start; i<=end; i++) {
+                    const id = i.toString();
+                    if(tabletsData[id]) toggleSelection(id);
+                }
+            };
+            window.clearSelection = () => { selectedIds.clear(); updateGridUI(); };
+            window.closeModal = () => document.getElementById('loan-modal').classList.add('hidden');
+        });
+
+        function switchResource(type) {
+            document.getElementById('tab-tablets').className = `flex-1 py-3 font-bold text-center rounded-l-xl transition ${type === 'tablets' ? 'tab-active' : 'tab-inactive'}`;
+            document.getElementById('tab-computers').className = `flex-1 py-3 font-bold text-center rounded-r-xl transition ${type === 'computers' ? 'tab-active' : 'tab-inactive'}`;
+            loadResource(type);
+        }
+
+        function loadResource(type) {
+            currentRes = RESOURCES[type];
+            selectedIds.clear();
+            updateButtonsState();
+            if(unsubscribe) unsubscribe();
+            
+            const grid = document.getElementById('grid-container');
+            grid.innerHTML = '<div class="col-span-full text-center py-10 text-gray-400">Cargando...</div>';
+
+            unsubscribe = onSnapshot(collection(db, currentRes.collection), (snap) => {
+                if (snap.empty && Object.keys(tabletsData).length === 0) { createInitialData(currentRes); return; }
+                renderGrid(snap);
+            });
+        }
+
+        async function createInitialData(resConfig) {
+            for(let i=1; i<=resConfig.total; i++) {
+                await setDoc(doc(db, resConfig.collection, i.toString()), { status: 'available', loanData: null });
+            }
+        }
+
+        function renderGrid(snap) {
+            const grid = document.getElementById('grid-container');
+            grid.innerHTML = '';
+            tabletsData = {};
+            let counts = { available: 0, loaned: 0, maint: 0 };
+
+            const docs = snap.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => parseInt(a.id) - parseInt(b.id));
+
+            docs.forEach(t => {
+                tabletsData[t.id] = t;
+                if(t.status === 'available') counts.available++;
+                else if(t.status === 'loaned') counts.loaned++;
+                else counts.maint++;
+
+                const div = document.createElement('div');
+                div.className = `resource-box h-20 rounded-lg flex flex-col items-center justify-center text-sm font-bold shadow-sm relative`;
+                
+                if (t.status === 'available') div.classList.add('status-available');
+                else if (t.status === 'loaned') div.classList.add('status-loaned');
+                else div.classList.add('status-maintenance');
+
+                div.onclick = () => toggleSelection(t.id);
+                if (selectedIds.has(t.id)) div.classList.add('status-selected');
+
+                let subText = "";
+                if(t.status === 'loaned') {
+                    subText = t.loanData.student ? t.loanData.student.split(' ')[0] : (t.loanData.teacher ? t.loanData.teacher.split(' ')[0] : 'Ocupado');
+                    div.title = `Prestado a: ${t.loanData.teacher} (${t.loanData.course})`;
+                } else if(t.status === 'maintenance') {
+                    subText = "Mantención";
+                }
+
+                div.innerHTML = `<span class="text-xs opacity-75">${currentRes.prefix}</span><span class="text-xl">${t.id}</span>
+                                 <span class="text-[9px] truncate w-full text-center px-1 bg-black/10 mt-1">${subText}</span>`;
+                grid.appendChild(div);
+            });
+
+            document.getElementById('count-available').textContent = counts.available;
+            document.getElementById('count-loaned').textContent = counts.loaned;
+            document.getElementById('count-maint').textContent = counts.maint;
+            updateButtonsState();
+        }
+
+        function toggleSelection(id) {
+            if (selectedIds.has(id)) selectedIds.delete(id);
+            else selectedIds.add(id);
+            
+            const grid = document.getElementById('grid-container');
+            // Re-render simple visual update
+            Array.from(grid.children).forEach(div => {
+                const spanVal = div.querySelector('span:nth-child(2)').innerText;
+                if (selectedIds.has(spanVal)) div.classList.add('status-selected');
+                else div.classList.remove('status-selected');
+            });
+            updateButtonsState();
+        }
+
+        function updateButtonsState() {
+            const count = selectedIds.size;
+            document.getElementById('sel-count').textContent = count;
+            document.getElementById('btn-loan').disabled = count === 0;
+            document.getElementById('btn-maintenance').disabled = count === 0;
+            document.getElementById('btn-return-mass').disabled = count === 0; // Habilitar botón devolución
+        }
+
+        function openLoanModal() {
+            // Verificar si hay items no disponibles seleccionados
+            for(let id of selectedIds) {
+                if(tabletsData[id].status !== 'available') return showToast("⚠️ Selección inválida: Incluye equipos ocupados.");
+            }
+            document.getElementById('modal-qty').textContent = selectedIds.size;
+            document.getElementById('modal-resource-name').textContent = currentRes.name;
+            document.getElementById('modal-student').value = '';
+            document.getElementById('loan-modal').classList.remove('hidden');
+        }
+
+        async function executeLoan() {
+            const course = document.getElementById('modal-course').value;
+            const teacher = document.getElementById('modal-teacher').value.trim();
+            const student = document.getElementById('modal-student').value.trim();
+
+            if(!teacher) return alert("Ingrese el nombre del profesor.");
+            const btn = document.getElementById('confirm-loan-btn');
+            btn.disabled = true; btn.textContent = "Guardando...";
+
+            const ids = Array.from(selectedIds);
+            const now = new Date().toISOString();
+
+            try {
+                const promises = ids.map(id => updateDoc(doc(db, currentRes.collection, id), {
+                    status: 'loaned',
+                    loanData: { course, teacher, student, timestamp: now }
+                }));
+                await Promise.all(promises);
+
+                await addDoc(collection(db, COLL_LOGS), {
+                    action: 'Asignación', resourceType: currentRes.name, tablets: ids,
+                    course, teacher, student, timestamp: now
+                });
+
+                closeModal();
+                window.clearSelection();
+                showToast(`✅ ${ids.length} equipos asignados.`);
+            } catch (e) { console.error(e); } finally { btn.disabled = false; btn.textContent = "Confirmar"; }
+        }
+
+        // DEVOLUCIÓN MASIVA (LIMPIAR PANTALLA)
+        async function returnSelected() {
+            if(!confirm(`¿Liberar / Devolver ${selectedIds.size} equipos seleccionados?`)) return;
+            
+            const ids = Array.from(selectedIds);
+            const now = new Date().toISOString();
+            
+            try {
+                const promises = ids.map(id => updateDoc(doc(db, currentRes.collection, id), {
+                    status: 'available', loanData: null
+                }));
+                await Promise.all(promises);
+
+                await addDoc(collection(db, COLL_LOGS), {
+                    action: 'Devolución Masiva', resourceType: currentRes.name, tablets: ids,
+                    course: "N/A", teacher: "Sistema", timestamp: now
+                });
+
+                window.clearSelection();
+                showToast("✅ Equipos liberados exitosamente.");
+            } catch(e) { console.error(e); showToast("Error al liberar."); }
+        }
+
+        async function setMaintenance() {
+            if(!confirm("¿Marcar como 'En Mantención'?")) return;
+            const ids = Array.from(selectedIds);
+            try {
+                const promises = ids.map(id => updateDoc(doc(db, currentRes.collection, id), { status: 'maintenance', loanData: null }));
+                await Promise.all(promises);
+                window.clearSelection();
+            } catch(e) { console.error(e); }
+        }
+
+        // GENERADOR DE REPORTES
+        async function generateReport() {
+            const start = document.getElementById('report-start').value;
+            const end = document.getElementById('report-end').value;
+            const tbody = document.getElementById('report-body');
+            const area = document.getElementById('report-area');
+            
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center p-4">Generando...</td></tr>';
+            area.classList.remove('hidden');
+            document.getElementById('report-dates').textContent = `Desde ${start} hasta ${end}`;
+
+            // Descargar logs y filtrar en cliente
+            const q = collection(db, COLL_LOGS);
+            const snap = await getDocs(q);
+            const logs = [];
+            
+            snap.forEach(d => {
+                const data = d.data();
+                const logDate = data.timestamp.split('T')[0];
+                if(logDate >= start && logDate <= end) logs.push(data);
+            });
+
+            logs.sort((a,b) => b.timestamp.localeCompare(a.timestamp)); // Descendente
+
+            tbody.innerHTML = '';
+            if(logs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center p-4">Sin movimientos.</td></tr>';
+            } else {
+                logs.forEach(l => {
+                    const date = new Date(l.timestamp).toLocaleString();
+                    const color = l.action.includes('Asignación') ? 'text-red-600' : 'text-green-600';
+                    const resp = l.student ? `${l.teacher} / ${l.student}` : l.teacher;
+                    tbody.innerHTML += `
+                        <tr class="border-b">
+                            <td class="p-3 border">${date}</td>
+                            <td class="p-3 border text-xs">${l.resourceType}</td>
+                            <td class="p-3 border font-bold ${color}">${l.action}</td>
+                            <td class="p-3 border text-xs font-mono">${l.tablets.join(', ')}</td>
+                            <td class="p-3 border">${resp}</td>
+                            <td class="p-3 border">${l.course}</td>
+                        </tr>
+                    `;
+                });
+            }
+        }
+
+        function showToast(msg) {
+            const box = document.getElementById('message-box');
+            box.innerText = msg;
+            box.classList.remove('hidden');
+            setTimeout(() => box.classList.add('hidden'), 3000);
+        }
+    </script>
+</body>
+</html>

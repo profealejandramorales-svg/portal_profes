@@ -3,229 +3,220 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal Docente - 2026</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Sala de Profesores - Escuela Agrícola SC</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
-        :root {
-            --bg-color: #eef2f7;
-            /* Colores específicos del Portal Docente */
-            --mod-aula: #198754;    /* Verde - Gestión Diaria */
-            --mod-eval: #0d6efd;    /* Azul - Evaluación */
-            --mod-orient: #d63384;  /* Rosa - Orientación */
-        }
-        body { background-color: var(--bg-color); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
-        
-        /* HEADER DOCENTE */
-        .main-header {
-            background: linear-gradient(90deg, #2c3e50 0%, #198754 100%); /* Gris oscuro a Verde */
-            color: white; padding: 1.5rem 0; margin-bottom: 2rem; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-        .school-logo { height: 70px; margin-right: 20px; border: 2px solid rgba(255,255,255,0.2); border-radius: 50%; padding: 2px; }
-        
-        /* RELOJ DIGITAL GRANDE */
-        .clock-widget {
-            font-variant-numeric: tabular-nums;
-            font-size: 3rem; /* Tamaño muy grande */
-            font-weight: 300; /* Fuente fina y elegante */
-            line-height: 1;
-            letter-spacing: -1px;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
-        .header-subtitle {
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            opacity: 0.8;
-            font-weight: 600;
-            margin-bottom: 5px;
-        }
-
-        /* SECCIONES */
-        .module-title {
-            font-size: 0.9rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;
-            margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #dee2e6;
-            display: flex; align-items: center; color: #6c757d;
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #ffffff;
+            /* Patrón de puntitos verdes */
+            background-image: radial-gradient(#22c55e 1.5px, transparent 1.5px);
+            background-size: 24px 24px;
         }
         
-        /* TARJETAS */
-        .app-card {
-            background: white; border: none; border-radius: 8px; 
-            transition: all 0.2s ease-in-out; text-decoration: none; color: inherit; 
-            height: 100%; display: block; overflow: hidden;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05); position: relative;
+        .portal-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            border-bottom: 4px solid transparent;
+            height: 100%;
+            background: white; /* Para que resalte sobre los puntos */
         }
-        .app-card:hover { transform: translateY(-3px); box-shadow: 0 8px 16px rgba(0,0,0,0.1); }
-        
-        .card-body-custom { padding: 1.2rem; display: flex; align-items: center; gap: 15px; }
-        
-        .app-icon {
-            width: 50px; height: 50px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
-            font-size: 1.5rem; flex-shrink: 0; transition: 0.3s;
+        .portal-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
         
-        .app-info h5 { font-weight: 700; font-size: 0.95rem; margin-bottom: 2px; color: #212529; }
-        .app-info p { font-size: 0.75rem; color: #6c757d; margin: 0; line-height: 1.2; }
+        /* Colores Temáticos */
+        .theme-indigo:hover { border-bottom-color: #4f46e5; }
+        .theme-blue:hover { border-bottom-color: #2563eb; }
+        .theme-green:hover { border-bottom-color: #16a34a; }
+        .theme-teal:hover { border-bottom-color: #0d9488; }
+        .theme-yellow:hover { border-bottom-color: #ca8a04; }
+        .theme-purple:hover { border-bottom-color: #9333ea; }
+        .theme-red:hover { border-bottom-color: #dc2626; }
+        .theme-orange:hover { border-bottom-color: #ea580c; }
 
-        /* Badge Nuevo */
-        .badge-new { 
-            position: absolute; top: 8px; right: 8px; 
-            background: #dc3545; color: white; font-size: 0.6rem; padding: 2px 6px; 
-            border-radius: 4px; font-weight: bold; 
+        /* Estilo Reloj */
+        .clock-container {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(4px);
+            border: 1px solid #e2e8f0;
         }
-
-        /* ESTILOS POR ZONA */
-        .border-aula:hover { border-top: 3px solid var(--mod-aula); }
-        .icon-aula { background-color: #d1e7dd; color: var(--mod-aula); }
-
-        .border-eval:hover { border-top: 3px solid var(--mod-eval); }
-        .icon-eval { background-color: #cfe2ff; color: var(--mod-eval); }
-
-        .border-orient:hover { border-top: 3px solid var(--mod-orient); }
-        .icon-orient { background-color: #f7d6e6; color: var(--mod-orient); }
-
-        .footer { text-align: center; padding: 2rem; color: #adb5bd; font-size: 0.75rem; margin-top: auto;}
     </style>
 </head>
-<body>
+<body class="min-h-screen flex flex-col">
 
-    <header class="main-header">
-        <div class="container d-flex justify-content-between align-items-center">
-            <div class="d-flex align-items-center">
-                <img src="logo.jpg" alt="SS.CC." class="school-logo">
+    <header class="bg-white/90 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <img src="logo.jpg" onerror="this.src='https://cdn-icons-png.flaticon.com/512/167/167707.png'" class="h-10 w-10 object-contain">
                 <div>
-                    <h1 class="h4 fw-bold mb-0">Portal Docente</h1>
-                    <span class="badge bg-light text-dark opacity-75">Intranet 2026</span>
+                    <h1 class="text-xl font-extrabold text-gray-800 tracking-tight uppercase">Sala de Profesores</h1>
+                    <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Escuela Agrícola Sagrados Corazones</p>
                 </div>
             </div>
-            <div class="text-end d-none d-md-block text-white">
-                <div class="header-subtitle">Sala de Profesores</div>
-                <div id="live-clock" class="clock-widget">--:--</div>
-                <div id="date-display" class="small opacity-75 mt-1"></div>
+            <div class="text-right">
+                <span class="inline-block w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
             </div>
         </div>
     </header>
 
-    <div class="container pb-5">
-
-        <div class="row mb-4">
-            <div class="col-12"><div class="module-title" style="color: var(--mod-aula)"><i class="fa-solid fa-chalkboard-user me-2"></i>Gestión de Aula</div></div>
-            
-            <div class="col-md-6 mb-3">
-                <a href="asistencia-mi-clase-profe.html" class="app-card border-aula">
-                    <span class="badge-new">NUEVO</span>
-                    <div class="card-body-custom">
-                        <div class="app-icon icon-aula"><i class="fa-solid fa-clipboard-user"></i></div>
-                        <div class="app-info">
-                            <h5>Mi Clase (Asistencia)</h5>
-                            <p>Registro de asistencia diaria y calificaciones.</p>
-                        </div>
-                    </div>
-                </a>
-            </div>
-            
-            <div class="col-md-6 mb-3">
-                <a href="bitacora.html" class="app-card border-aula">
-                    <div class="card-body-custom">
-                        <div class="app-icon icon-aula"><i class="fa-solid fa-book-open"></i></div>
-                        <div class="app-info">
-                            <h5>Bitácora Digital</h5>
-                            <p>Planificación de clases y cobertura.</p>
-                        </div>
-                    </div>
-                </a>
-            </div>
+    <div class="w-full flex justify-center mt-8 mb-4">
+        <div class="clock-container rounded-2xl px-12 py-6 text-center shadow-lg transform hover:scale-105 transition duration-500 cursor-default">
+            <p id="big-clock" class="text-6xl md:text-7xl font-bold text-gray-800 font-[JetBrains Mono] tracking-tighter">00:00</p>
+            <p id="big-date" class="text-sm md:text-base text-gray-500 font-bold uppercase mt-2 tracking-widest">Cargando fecha...</p>
         </div>
-
-        <div class="row mb-4">
-            <div class="col-12"><div class="module-title" style="color: var(--mod-eval)"><i class="fa-solid fa-calculator me-2"></i>Evaluación</div></div>
-            
-            <div class="col-md-6 col-lg-4 mb-3">
-                <a href="calculadora_notas.html" class="app-card border-eval">
-                    <div class="card-body-custom">
-                        <div class="app-icon icon-eval"><i class="fa-solid fa-calculator"></i></div>
-                        <div class="app-info">
-                            <h5>Calculadora Notas</h5>
-                            <p>Escalas al 60% y ponderaciones.</p>
-                        </div>
-                    </div>
-                </a>
-            </div>
-
-            <div class="col-md-6 col-lg-4 mb-3">
-                <a href="salva.html" class="app-card border-eval">
-                    <div class="card-body-custom">
-                        <div class="app-icon icon-eval"><i class="fa-solid fa-life-ring"></i></div>
-                        <div class="app-info">
-                            <h5>Salva el Semestre</h5>
-                            <p>Simulador de nota mínima.</p>
-                        </div>
-                    </div>
-                </a>
-            </div>
-
-            <div class="col-md-6 col-lg-4 mb-3">
-                <a href="nem.html" class="app-card border-eval">
-                    <div class="card-body-custom">
-                        <div class="app-icon icon-eval"><i class="fa-solid fa-ranking-star"></i></div>
-                        <div class="app-info">
-                            <h5>Calculadora NEM</h5>
-                            <p>Proyección de ranking.</p>
-                        </div>
-                    </div>
-                </a>
-            </div>
-        </div>
-
-        <div class="row">
-            <div class="col-12"><div class="module-title" style="color: var(--mod-orient)"><i class="fa-solid fa-hands-holding-child me-2"></i>Orientación</div></div>
-            
-            <div class="col-md-6 mb-3">
-                <a href="entrevistas.html" class="app-card border-orient">
-                    <div class="card-body-custom">
-                        <div class="app-icon icon-orient"><i class="fa-solid fa-comments"></i></div>
-                        <div class="app-info">
-                            <h5>Entrevistas</h5>
-                            <p>Registro de atención a apoderados.</p>
-                        </div>
-                    </div>
-                </a>
-            </div>
-
-            <div class="col-md-6 mb-3">
-                <a href="repitencia.html" class="app-card border-orient">
-                    <div class="card-body-custom">
-                        <div class="app-icon icon-orient"><i class="fa-solid fa-file-contract"></i></div>
-                        <div class="app-info">
-                            <h5>Gestor Decreto 67</h5>
-                            <p>Actas de evaluación y repitencia.</p>
-                        </div>
-                    </div>
-                </a>
-            </div>
-        </div>
-
     </div>
 
-    <footer class="footer">
-        <p class="mb-0">Sistema de Gestión Integrado • Escuela Agrícola Sagrados Corazones</p>
-        <p class="mb-0 fw-bold text-success">Desarrollado por ProfeAle &copy; 2026</p>
+    <main class="flex-grow max-w-7xl mx-auto px-4 py-6 w-full space-y-12">
+
+        <section>
+            <div class="flex items-center gap-2 mb-4 border-b border-gray-300 pb-2">
+                <i class="fa-solid fa-graduation-cap text-indigo-600"></i>
+                <h2 class="text-sm font-bold text-gray-600 uppercase tracking-wider">Gestión Pedagógica</h2>
+            </div>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                
+                <a href="app_profes.html" class="portal-card p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center text-center gap-3 group theme-indigo">
+                    <div class="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center text-2xl group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                        <i class="fa-solid fa-book-open"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-gray-800 text-lg">Libro Digital</h3>
+                        <p class="text-xs text-gray-500 mt-1">Asistencia y Notas</p>
+                    </div>
+                </a>
+
+                <a href="plani.html" class="portal-card p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center text-center gap-3 group theme-blue">
+                    <div class="w-14 h-14 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center text-2xl group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                        <i class="fa-solid fa-calendar-days"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-gray-800 text-lg">Planificaciones</h3>
+                        <p class="text-xs text-gray-500 mt-1">Plataforma UTP</p>
+                    </div>
+                </a>
+
+                <a href="bitacora.html" class="portal-card p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center text-center gap-3 group theme-green">
+                    <div class="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center text-2xl group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                        <i class="fa-solid fa-list-check"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-gray-800 text-lg">Bitácora</h3>
+                        <p class="text-xs text-gray-500 mt-1">Registro de Clases</p>
+                    </div>
+                </a>
+
+                <a href="calculadora_notas.html" class="portal-card p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center text-center gap-3 group theme-teal">
+                    <div class="w-14 h-14 bg-teal-50 text-teal-600 rounded-full flex items-center justify-center text-2xl group-hover:bg-teal-600 group-hover:text-white transition-colors">
+                        <i class="fa-solid fa-calculator"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-gray-800 text-lg">Calc. Notas</h3>
+                        <p class="text-xs text-gray-500 mt-1">Simulador Promedios</p>
+                    </div>
+                </a>
+
+                <a href="nem.html" class="portal-card p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center text-center gap-3 group theme-teal">
+                    <div class="w-14 h-14 bg-cyan-50 text-cyan-600 rounded-full flex items-center justify-center text-2xl group-hover:bg-cyan-600 group-hover:text-white transition-colors">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-gray-800 text-lg">Ranking NEM</h3>
+                        <p class="text-xs text-gray-500 mt-1">Proyección</p>
+                    </div>
+                </a>
+
+                <a href="salva.html" class="portal-card p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center text-center gap-3 group theme-yellow">
+                    <div class="w-14 h-14 bg-yellow-50 text-yellow-600 rounded-full flex items-center justify-center text-2xl group-hover:bg-yellow-500 group-hover:text-white transition-colors">
+                        <i class="fa-solid fa-life-ring"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-gray-800 text-lg">Salva el Semestre</h3>
+                        <p class="text-xs text-gray-500 mt-1">Cálculo Nota Mínima</p>
+                    </div>
+                </a>
+
+            </div>
+        </section>
+
+        <section>
+            <div class="flex items-center gap-2 mb-4 border-b border-gray-300 pb-2">
+                <i class="fa-solid fa-file-signature text-purple-600"></i>
+                <h2 class="text-sm font-bold text-gray-600 uppercase tracking-wider">Administrativo</h2>
+            </div>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                
+                <a href="citacion.html" class="portal-card p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center text-center gap-3 group theme-purple">
+                    <div class="w-12 h-12 bg-purple-50 text-purple-600 rounded-full flex items-center justify-center text-xl group-hover:bg-purple-600 group-hover:text-white transition-colors">
+                        <i class="fa-solid fa-envelope-open-text"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-gray-800">Citaciones</h3>
+                        <p class="text-xs text-gray-500 mt-1">Apoderados</p>
+                    </div>
+                </a>
+
+                <a href="entrevistas.html" class="portal-card p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center text-center gap-3 group theme-purple">
+                    <div class="w-12 h-12 bg-fuchsia-50 text-fuchsia-600 rounded-full flex items-center justify-center text-xl group-hover:bg-fuchsia-600 group-hover:text-white transition-colors">
+                        <i class="fa-solid fa-users-between-lines"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-gray-800">Entrevistas</h3>
+                        <p class="text-xs text-gray-500 mt-1">Bitácora Reuniones</p>
+                    </div>
+                </a>
+
+                <a href="repitencia.html" class="portal-card p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center text-center gap-3 group theme-red">
+                    <div class="w-12 h-12 bg-rose-50 text-rose-600 rounded-full flex items-center justify-center text-xl group-hover:bg-rose-600 group-hover:text-white transition-colors">
+                        <i class="fa-solid fa-file-shield"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-gray-800">Repitencia</h3>
+                        <p class="text-xs text-gray-500 mt-1">Informe Decreto 67</p>
+                    </div>
+                </a>
+
+                <a href="prestamo.html" class="portal-card p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center text-center gap-3 group theme-orange">
+                    <div class="w-12 h-12 bg-orange-50 text-orange-600 rounded-full flex items-center justify-center text-xl group-hover:bg-orange-600 group-hover:text-white transition-colors">
+                        <i class="fa-solid fa-laptop-medical"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-gray-800">Recursos</h3>
+                        <p class="text-xs text-gray-500 mt-1">Reserva Equipos</p>
+                    </div>
+                </a>
+
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-white/80 backdrop-blur border-t border-gray-200 py-6 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="text-sm font-bold text-gray-500">Sistema Integral de Gestión &bull; ProfeAle</p>
+            <p class="text-xs text-gray-400 mt-1">&copy; 2025 Escuela Agrícola Sagrados Corazones</p>
+        </div>
     </footer>
 
     <script>
-        function updateHeaderInfo() {
+        function updateClock() {
             const now = new Date();
-            // Formato de hora corto (HH:MM) para el reloj grande
-            document.getElementById('live-clock').textContent = now.toLocaleTimeString('es-CL', {hour: '2-digit', minute:'2-digit'});
-            
+            const timeString = now.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
             const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            // Capitalizar la primera letra de la fecha
-            const dateString = now.toLocaleDateString('es-ES', dateOptions);
-            document.getElementById('date-display').textContent = dateString.charAt(0).toUpperCase() + dateString.slice(1);
+            const dateString = now.toLocaleDateString('es-CL', dateOptions);
+            
+            // Reloj Grande
+            document.getElementById('big-clock').textContent = timeString;
+            document.getElementById('big-date').textContent = dateString.charAt(0).toUpperCase() + dateString.slice(1);
         }
-        setInterval(updateHeaderInfo, 1000);
-        updateHeaderInfo(); 
+        setInterval(updateClock, 1000);
+        updateClock();
     </script>
 </body>
 </html>
