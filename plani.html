@@ -3,411 +3,168 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control de Planificaciones - UTP</title>
+    <title>Envío de Planificaciones (Links)</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
-        
-        .status-badge { padding: 4px 8px; border-radius: 999px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }
-        .status-pending { background-color: #fef9c3; color: #a16207; }   /* Amarillo */
-        .status-review { background-color: #dbeafe; color: #1e40af; }    /* Azul */
-        .status-approved { background-color: #dcfce7; color: #15803d; }  /* Verde */
-        .status-rejected { background-color: #fee2e2; color: #b91c1c; }  /* Rojo */
-
-        /* Tabs */
-        .tab-btn { padding: 10px 20px; font-weight: 600; color: #64748b; border-bottom: 2px solid transparent; transition: all 0.3s; }
-        .tab-btn.active { color: #4f46e5; border-color: #4f46e5; }
+        body { font-family: 'Inter', sans-serif; background-color: #f0fdf4; }
     </style>
 </head>
-<body class="min-h-screen p-4 md:p-8">
+<body class="min-h-screen flex items-center justify-center p-4">
 
-    <div class="max-w-6xl mx-auto">
-        
-        <div class="flex flex-col md:flex-row justify-between items-center mb-8 bg-white p-6 rounded-xl shadow-sm border-l-4 border-indigo-600">
-            <div class="flex items-center gap-4">
-                <img src="logo.jpg" class="h-14 w-auto object-contain" onerror="this.style.display='none'">
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-800">Control de Planificaciones</h1>
-                    <p class="text-sm text-gray-500">Gestión de entregas curriculares UTP</p>
-                </div>
-            </div>
-            
-            <div class="mt-4 md:mt-0 flex bg-gray-100 rounded-lg p-1">
-                <button onclick="switchRole('docente')" id="btn-role-docente" class="tab-btn active text-sm rounded-md">Vista Docente</button>
-                <button onclick="switchRole('utp')" id="btn-role-utp" class="tab-btn text-sm rounded-md">Vista UTP</button>
-            </div>
+    <div class="max-w-md w-full bg-white rounded-xl shadow-xl overflow-hidden">
+        <div class="bg-green-700 p-6 text-center">
+            <h1 class="text-white text-2xl font-bold">Envío de Enlaces</h1>
+            <p class="text-green-100 text-sm">Plataforma de Contingencia UTP 2025</p>
         </div>
 
-        <div id="view-docente" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="p-8 space-y-4">
             
-            <div class="lg:col-span-1 bg-white p-6 rounded-xl shadow-sm h-fit">
-                <h2 class="text-lg font-bold text-gray-700 mb-4 flex items-center gap-2">
-                    <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                    Nueva Entrega
-                </h2>
+            <div>
+                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Docente</label>
+                <select id="input-docente" class="w-full border-2 border-gray-200 p-3 rounded-lg bg-white focus:border-green-500 outline-none">
+                    <option value="">Cargando lista...</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Curso / Nivel</label>
+                <select id="input-curso" class="w-full border-2 border-gray-200 p-3 rounded-lg bg-white focus:border-green-500 outline-none">
+                    <option value="">Cargando lista...</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Asignatura</label>
+                <input type="text" id="input-asignatura" class="w-full border-2 border-gray-200 p-3 rounded-lg focus:border-green-500 outline-none" placeholder="Ej: Matemática, Orientación...">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Título / Mes</label>
+                <input type="text" id="input-titulo" class="w-full border-2 border-gray-200 p-3 rounded-lg focus:border-green-500 outline-none" placeholder="Ej: Marzo - Unidad 1">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Link del Archivo (Drive/Dropbox)</label>
+                <input type="url" id="input-link" class="w-full border-2 border-gray-200 p-3 rounded-lg text-blue-600 focus:border-green-500 outline-none" placeholder="https://...">
+            </div>
+
+            <button id="btn-enviar" class="w-full bg-green-700 text-white font-bold py-4 rounded-lg hover:bg-green-800 transition flex justify-center items-center gap-2 shadow-lg mt-4">
+                <span id="btn-text">🚀 Enviar a UTP</span>
+            </button>
+
+            <div id="mensaje-exito" class="hidden mt-4 p-3 bg-green-100 text-green-800 text-center rounded-lg text-sm font-bold border border-green-200">
+                ✅ ¡Recibido! Tu planificación ha sido registrada en el sistema.
+            </div>
+
+        </div>
+        <div class="bg-gray-50 p-4 text-center text-xs text-gray-400 border-t">
+            Escuela Agrícola Sagrados Corazones
+        </div>
+    </div>
+
+    <script>
+        // 1. CONFIGURACIÓN BITÁCORA (Para leer listas)
+        const configBitacora = { apiKey: "AIzaSyDUArOBUzzvulHYQGA7IvnEwo2jQbEa3Xs", authDomain: "attendance-ai-s81lt.firebaseapp.com", projectId: "attendance-ai-s81lt", storageBucket: "attendance-ai-s81lt.firebasestorage.app", messagingSenderId: "935781953186", appId: "1:935781953186:web:6c8a7a93ffad180d33b1fb" };
+        const appBitacora = firebase.initializeApp(configBitacora, "appBitacora");
+        const dbBitacora = appBitacora.firestore();
+
+        // 2. CONFIGURACIÓN PLANIFICACIONES (Para guardar)
+        const configPlanif = { apiKey: "AIzaSyDJnJlpsqR76z_lBnTNEULYcGoQGIi23VU", authDomain: "planificaciones-18b94.firebaseapp.com", projectId: "planificaciones-18b94", storageBucket: "planificaciones-18b94.appspot.com", messagingSenderId: "268119843295", appId: "1:268119843295:web:bb2bdbcb0affe4ecf3646a" };
+        const appPlanif = firebase.initializeApp(configPlanif, "appPlanif");
+        const dbPlanif = appPlanif.firestore();
+
+        // CARGAR LISTAS AL INICIAR
+        document.addEventListener("DOMContentLoaded", async () => {
+            const selDocente = document.getElementById('input-docente');
+            const selCurso = document.getElementById('input-curso');
+
+            try {
+                // Cargar Docentes
+                const docSnap = await dbBitacora.collection('docentes').get();
+                const docentes = docSnap.docs.map(d => d.data().nombre).sort();
                 
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Docente</label>
-                        <input type="text" id="input-teacher" class="w-full border p-2 rounded focus:ring-2 focus:ring-indigo-200 outline-none text-sm" placeholder="Tu Nombre">
-                    </div>
+                selDocente.innerHTML = '<option value="">-- Seleccionar Docente --</option>';
+                docentes.forEach(d => {
+                    selDocente.innerHTML += `<option value="${d}">${d}</option>`;
+                });
 
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Curso</label>
-                            <select id="input-course" class="w-full border p-2 rounded text-sm bg-white">
-                                <option value="">Seleccionar</option>
-                                <option value="1° Medio A">1° Medio A</option>
-                                <option value="1° Medio B">1° Medio B</option>
-                                <option value="2° Medio A">2° Medio A</option>
-                                <option value="2° Medio B">2° Medio B</option>
-                                <option value="3° Medio A">3° Medio A</option>
-                                <option value="3° Medio C">3° Medio C</option>
-                                <option value="4° Medio A">4° Medio A</option>
-                                <option value="4° Medio C">4° Medio C</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Asignatura</label>
-                            <select id="input-subject" class="w-full border p-2 rounded text-sm bg-white">
-                                <option value="">Seleccionar</option>
-                                <option value="Lenguaje">Lenguaje</option>
-                                <option value="Matemática">Matemática</option>
-                                <option value="Historia">Historia</option>
-                                <option value="Ciencias">Ciencias</option>
-                                <option value="Inglés">Inglés</option>
-                                <option value="Especialidad">Especialidad</option>
-                                <option value="Otro">Otro</option>
-                            </select>
-                        </div>
-                    </div>
+                // Cargar Cursos (Niveles únicos)
+                const curSnap = await dbBitacora.collection('cursos').get();
+                const niveles = [...new Set(curSnap.docs.map(d => d.data().nivel))].sort();
+                
+                selCurso.innerHTML = '<option value="">-- Seleccionar Curso --</option>';
+                niveles.forEach(n => {
+                    selCurso.innerHTML += `<option value="${n}">${n}</option>`;
+                });
 
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Unidad / Mes</label>
-                        <input type="text" id="input-unit" class="w-full border p-2 rounded text-sm" placeholder="Ej: Unidad 1 - Marzo">
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Link al Archivo (Drive/Dropbox)</label>
-                        <input type="url" id="input-link" class="w-full border p-2 rounded text-sm text-blue-600" placeholder="https://docs.google.com/...">
-                        <p class="text-[10px] text-gray-400 mt-1">* Pega aquí el enlace compartido de tu planificación.</p>
-                    </div>
-
-                    <button id="btn-submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded transition shadow-md flex justify-center items-center gap-2">
-                        <span>📤 Enviar Planificación</span>
-                    </button>
-                </div>
-            </div>
-
-            <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm">
-                <h2 class="text-lg font-bold text-gray-700 mb-4">Mis Envíos Recientes</h2>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm text-left">
-                        <thead class="bg-gray-50 text-gray-500 font-medium border-b">
-                            <tr>
-                                <th class="p-3">Fecha</th>
-                                <th class="p-3">Detalle</th>
-                                <th class="p-3">Link</th>
-                                <th class="p-3">Estado</th>
-                                <th class="p-3">Feedback UTP</th>
-                            </tr>
-                        </thead>
-                        <tbody id="my-submissions-body" class="divide-y divide-gray-100">
-                            </tbody>
-                    </table>
-                    <p id="empty-msg-docente" class="text-center text-gray-400 py-8 text-sm hidden">No has enviado planificaciones aún.</p>
-                </div>
-            </div>
-        </div>
-
-        <div id="view-utp" class="hidden">
-            
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-yellow-400">
-                    <span class="block text-gray-500 text-xs uppercase font-bold">Pendientes</span>
-                    <span class="text-2xl font-bold text-gray-800" id="count-pending">0</span>
-                </div>
-                <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-blue-400">
-                    <span class="block text-gray-500 text-xs uppercase font-bold">En Revisión</span>
-                    <span class="text-2xl font-bold text-gray-800" id="count-review">0</span>
-                </div>
-                <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-green-500">
-                    <span class="block text-gray-500 text-xs uppercase font-bold">Aprobadas</span>
-                    <span class="text-2xl font-bold text-gray-800" id="count-approved">0</span>
-                </div>
-                <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-red-400">
-                    <span class="block text-gray-500 text-xs uppercase font-bold">Con Observaciones</span>
-                    <span class="text-2xl font-bold text-gray-800" id="count-rejected">0</span>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-                <div class="p-4 border-b bg-gray-50 flex justify-between items-center">
-                    <h2 class="font-bold text-gray-700">Bandeja de Entrada General</h2>
-                    <input type="text" placeholder="Buscar por profesor..." class="border p-1.5 rounded text-sm w-64" id="search-utp">
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm text-left">
-                        <thead class="bg-gray-100 text-gray-600 uppercase text-xs">
-                            <tr>
-                                <th class="p-4">Fecha</th>
-                                <th class="p-4">Profesor</th>
-                                <th class="p-4">Curso / Asignatura</th>
-                                <th class="p-4">Archivo</th>
-                                <th class="p-4">Estado Actual</th>
-                                <th class="p-4 text-center">Acciones UTP</th>
-                            </tr>
-                        </thead>
-                        <tbody id="utp-table-body" class="divide-y divide-gray-200">
-                            </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-    </div>
-
-    <div id="modal-feedback" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
-        <div class="bg-white p-6 rounded-lg shadow-xl w-96">
-            <h3 class="font-bold text-lg mb-2">Revisión UTP</h3>
-            <p class="text-sm text-gray-500 mb-4" id="modal-subtitle">Comentario para el docente</p>
-            <textarea id="feedback-text" class="w-full border p-2 rounded mb-4 text-sm" rows="3" placeholder="Ej: Falta especificar instrumentos de evaluación..."></textarea>
-            <div class="flex justify-end gap-2">
-                <button onclick="closeModal()" class="px-4 py-2 text-gray-500 hover:bg-gray-100 rounded text-sm">Cancelar</button>
-                <button id="btn-save-feedback" class="px-4 py-2 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700">Guardar Cambios</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="toast" class="fixed bottom-5 right-5 bg-gray-800 text-white px-4 py-2 rounded shadow-lg hidden transition-opacity text-sm"></div>
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, updateDoc, doc, deleteDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-
-        // Configuración Firebase
-        const firebaseConfig = { apiKey: "AIzaSyBnSMVCH0yyYUWk5z54kTIPTrWkyoeWs-I", authDomain: "suspenciones-40d0c.firebaseapp.com", projectId: "suspenciones-40d0c", storageBucket: "suspenciones-40d0c.firebasestorage.app", messagingSenderId: "853418739042", appId: "1:853418739042:web:d051befb99cd2acdd4583b" };
-        
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-        const COLL_NAME = "planificaciones";
-
-        let allPlans = [];
-        let editingId = null; 
-
-        document.addEventListener('DOMContentLoaded', () => {
-            signInAnonymously(auth).then(() => {
-                listenData();
-            });
-            
-            document.getElementById('btn-submit').addEventListener('click', submitPlan);
-            document.getElementById('btn-save-feedback').addEventListener('click', saveFeedback);
-            
-            document.getElementById('search-utp').addEventListener('keyup', (e) => {
-                renderUtpTable(e.target.value);
-            });
+            } catch (e) {
+                console.error("Error cargando listas:", e);
+                selDocente.innerHTML = '<option>Error de conexión</option>';
+            }
         });
 
-        function listenData() {
-            const q = query(collection(db, COLL_NAME), orderBy('timestamp', 'desc'));
-            onSnapshot(q, (snap) => {
-                allPlans = [];
-                snap.forEach(d => {
-                    allPlans.push({ id: d.id, ...d.data() });
-                });
-                renderDocenteTable();
-                renderUtpTable();
-                updateStats();
-            });
-        }
-
-        async function submitPlan() {
-            const teacher = document.getElementById('input-teacher').value.trim();
-            const course = document.getElementById('input-course').value;
-            const subject = document.getElementById('input-subject').value;
-            const unit = document.getElementById('input-unit').value.trim();
+        // ENVIAR
+        document.getElementById('btn-enviar').addEventListener('click', async () => {
+            const docente = document.getElementById('input-docente').value;
+            const curso = document.getElementById('input-curso').value;
+            const asignatura = document.getElementById('input-asignatura').value.trim();
+            const titulo = document.getElementById('input-titulo').value.trim();
             const link = document.getElementById('input-link').value.trim();
 
-            if(!teacher || !course || !subject || !unit) {
-                return showToast("⚠️ Completa los campos obligatorios.");
+            if(!docente || !curso || !asignatura || !titulo) {
+                alert("⚠️ Por favor completa los campos obligatorios.");
+                return;
             }
 
-            const btn = document.getElementById('btn-submit');
-            btn.disabled = true; btn.innerText = "Enviando...";
+            const btn = document.getElementById('btn-enviar');
+            const btnText = document.getElementById('btn-text');
+            const originalText = btnText.innerText;
+            
+            btn.disabled = true;
+            btnText.innerText = "Enviando...";
+            btn.classList.add('opacity-50');
 
             try {
-                await addDoc(collection(db, COLL_NAME), {
-                    teacher, course, subject, unit, link,
-                    status: 'pending', 
-                    feedback: '',
-                    timestamp: new Date().toISOString()
+                // Guardar en la MISMA colección que el planificador digital
+                // Esto hace que aparezca en el Control UTP automáticamente
+                await dbPlanif.collection('planificaciones_digitales').add({
+                    docente: docente,
+                    curso: curso,           // Guardamos como 'curso' o 'nivel' según convenga, el Control lee ambos
+                    nivel: curso,           // Duplicamos para asegurar compatibilidad
+                    asignatura: asignatura,
+                    mes_planificado: titulo, // El control leerá esto como el mes/unidad
+                    link_externo: link,     
+                    estado: 'Enviado UTP',
+                    origen: 'link',         // Etiqueta clave para el visor
+                    timestamp: Date.now(),
+                    fecha_envio: new Date().toLocaleString()
                 });
+
+                document.getElementById('mensaje-exito').classList.remove('hidden');
                 
-                document.getElementById('input-unit').value = '';
+                // Resetear campos visuales
+                document.getElementById('input-titulo').value = '';
                 document.getElementById('input-link').value = '';
-                showToast("✅ Planificación enviada exitosamente.");
-            } catch (e) {
-                console.error(e);
-                showToast("Error al enviar.");
-            } finally {
-                btn.disabled = false; btn.innerHTML = "<span>📤 Enviar Planificación</span>";
+                
+                setTimeout(() => {
+                    document.getElementById('mensaje-exito').classList.add('hidden');
+                    btn.disabled = false;
+                    btnText.innerText = originalText;
+                    btn.classList.remove('opacity-50');
+                }, 3000);
+
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Hubo un error al enviar. Verifica tu conexión.");
+                btn.disabled = false;
+                btnText.innerText = originalText;
+                btn.classList.remove('opacity-50');
             }
-        }
-
-        function renderDocenteTable() {
-            const tbody = document.getElementById('my-submissions-body');
-            tbody.innerHTML = '';
-            const myPlans = allPlans.slice(0, 5); 
-
-            if(myPlans.length === 0) {
-                document.getElementById('empty-msg-docente').classList.remove('hidden');
-            } else {
-                document.getElementById('empty-msg-docente').classList.add('hidden');
-                myPlans.forEach(p => {
-                    const date = new Date(p.timestamp).toLocaleDateString();
-                    tbody.innerHTML += `
-                        <tr class="hover:bg-gray-50 border-b">
-                            <td class="p-3 text-gray-500">${date}</td>
-                            <td class="p-3">
-                                <span class="font-bold text-gray-700 block">${p.unit}</span>
-                                <span class="text-xs text-gray-500">${p.course} - ${p.subject}</span>
-                            </td>
-                            <td class="p-3">
-                                ${p.link ? `<a href="${p.link}" target="_blank" class="text-blue-600 hover:underline text-xs bg-blue-50 px-2 py-1 rounded">Ver Archivo 🔗</a>` : '<span class="text-gray-400 text-xs">Sin link</span>'}
-                            </td>
-                            <td class="p-3">${getStatusBadge(p.status)}</td>
-                            <td class="p-3 text-xs italic text-gray-600">${p.feedback || '-'}</td>
-                        </tr>
-                    `;
-                });
-            }
-        }
-
-        function renderUtpTable(filterText = '') {
-            const tbody = document.getElementById('utp-table-body');
-            tbody.innerHTML = '';
-            
-            const filtered = allPlans.filter(p => 
-                p.teacher.toLowerCase().includes(filterText.toLowerCase()) || 
-                p.subject.toLowerCase().includes(filterText.toLowerCase())
-            );
-
-            filtered.forEach(p => {
-                const date = new Date(p.timestamp).toLocaleDateString();
-                tbody.innerHTML += `
-                    <tr class="hover:bg-gray-50 border-b">
-                        <td class="p-4 text-gray-500 whitespace-nowrap">${date}</td>
-                        <td class="p-4 font-bold text-gray-800">${p.teacher}</td>
-                        <td class="p-4">
-                            <div class="text-sm font-semibold">${p.subject}</div>
-                            <div class="text-xs text-gray-500">${p.course} • ${p.unit}</div>
-                        </td>
-                        <td class="p-4">
-                            ${p.link ? `<a href="${p.link}" target="_blank" class="text-indigo-600 font-bold hover:underline flex items-center gap-1"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg> Revisar</a>` : '<span class="text-gray-400 text-xs italic">Físico/Email</span>'}
-                        </td>
-                        <td class="p-4">${getStatusBadge(p.status)}</td>
-                        <td class="p-4 text-center">
-                            <div class="flex justify-center gap-2">
-                                <button onclick="window.updateStatus('${p.id}', 'approved')" class="bg-green-100 text-green-700 hover:bg-green-200 p-2 rounded-full" title="Aprobar">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                </button>
-                                <button onclick="window.openFeedback('${p.id}', '${p.feedback || ''}')" class="bg-yellow-100 text-yellow-700 hover:bg-yellow-200 p-2 rounded-full" title="Observar / Feedback">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                                </button>
-                                <button onclick="window.deletePlan('${p.id}')" class="bg-gray-100 text-gray-500 hover:bg-red-100 hover:text-red-600 p-2 rounded-full" title="Eliminar">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-            });
-        }
-
-        window.updateStatus = async (id, status) => {
-            try {
-                await updateDoc(doc(db, COLL_NAME, id), { status });
-                showToast("Estado actualizado.");
-            } catch(e) { console.error(e); }
-        };
-
-        window.openFeedback = (id, currentFeedback) => {
-            editingId = id;
-            document.getElementById('feedback-text').value = currentFeedback;
-            document.getElementById('modal-feedback').classList.remove('hidden');
-        };
-
-        window.closeModal = () => {
-            document.getElementById('modal-feedback').classList.add('hidden');
-            editingId = null;
-        };
-
-        async function saveFeedback() {
-            if(!editingId) return;
-            const text = document.getElementById('feedback-text').value;
-            const status = text.trim().length > 0 ? 'rejected' : 'review';
-            
-            try {
-                await updateDoc(doc(db, COLL_NAME, editingId), { 
-                    feedback: text,
-                    status: status 
-                });
-                showToast("Feedback guardado.");
-                closeModal();
-            } catch(e) { showToast("Error al guardar."); }
-        }
-
-        window.deletePlan = async (id) => {
-            if(confirm("¿Eliminar este registro permanentemente?")) {
-                await deleteDoc(doc(db, COLL_NAME, id));
-                showToast("Registro eliminado.");
-            }
-        };
-
-        function getStatusBadge(status) {
-            switch(status) {
-                case 'pending': return `<span class="status-badge status-pending">Pendiente</span>`;
-                case 'review': return `<span class="status-badge status-review">En Revisión</span>`;
-                case 'approved': return `<span class="status-badge status-approved">Aprobada</span>`;
-                case 'rejected': return `<span class="status-badge status-rejected">Observada</span>`;
-                default: return `<span class="status-badge bg-gray-100">Desc.</span>`;
-            }
-        }
-
-        function updateStats() {
-            let counts = { pending: 0, review: 0, approved: 0, rejected: 0 };
-            allPlans.forEach(p => { if(counts[p.status] !== undefined) counts[p.status]++; });
-            
-            document.getElementById('count-pending').innerText = counts.pending;
-            document.getElementById('count-review').innerText = counts.review;
-            document.getElementById('count-approved').innerText = counts.approved;
-            document.getElementById('count-rejected').innerText = counts.rejected;
-        }
-
-        window.switchRole = (role) => {
-            const btnDoc = document.getElementById('btn-role-docente');
-            const btnUtp = document.getElementById('btn-role-utp');
-            const viewDoc = document.getElementById('view-docente');
-            const viewUtp = document.getElementById('view-utp');
-
-            if(role === 'docente') {
-                btnDoc.classList.add('active'); btnUtp.classList.remove('active');
-                viewDoc.classList.remove('hidden'); viewUtp.classList.add('hidden');
-            } else {
-                btnUtp.classList.add('active'); btnDoc.classList.remove('active');
-                viewUtp.classList.remove('hidden'); viewDoc.classList.add('hidden');
-            }
-        };
-        window.switchRole = switchRole;
-
-        function showToast(msg) {
-            const t = document.getElementById('toast');
-            t.innerText = msg; t.classList.remove('hidden');
-            setTimeout(() => t.classList.add('hidden'), 3000);
-        }
+        });
     </script>
 </body>
 </html>
