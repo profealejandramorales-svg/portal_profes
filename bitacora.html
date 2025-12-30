@@ -120,7 +120,7 @@
             <div class="tab-pane fade show active" id="pills-plan">
                 <div class="alert alert-success bg-opacity-10 border-success py-2 small d-flex align-items-center">
                     <i class="bi bi-info-circle-fill me-2 fs-5 text-success"></i>
-                    <div><strong>Instrucción:</strong> Ingrese los Objetivos de Aprendizaje correspondientes al año seleccionado.</div>
+                    <div><strong>Instrucción:</strong> Ingrese los OA, AE o Criterios. (Los códigos repetidos se agruparán automáticamente en cobertura).</div>
                 </div>
                 <div id="container-plan" class="mb-4"></div> 
                 <div class="text-center my-4">
@@ -134,12 +134,12 @@
             <div class="tab-pane fade" id="pills-real">
                 <div class="alert alert-warning bg-opacity-10 border-warning py-2 small d-flex align-items-center">
                     <i class="bi bi-check-circle-fill me-2 fs-5 text-warning"></i>
-                    <div><strong>Instrucción:</strong> Marque las casillas de los meses trabajados.</div>
+                    <div><strong>Vista Unificada:</strong> Los objetivos con el mismo código aparecen agrupados en una sola fila.</div>
                 </div>
                 <div class="table-responsive bg-white shadow-sm rounded p-3">
                     <table class="table table-hover align-middle table-sm" id="table-cobertura">
                         <thead class="table-light text-center small">
-                            <tr><th class="text-start" style="width: 40%">Objetivo / Indicador</th><th>MAR</th><th>ABR</th><th>MAY</th><th>JUN</th><th>JUL</th><th>AGO</th><th>SEP</th><th>OCT</th><th>NOV</th><th>DIC</th></tr>
+                            <tr><th class="text-start" style="width: 40%">Objetivo Unificado</th><th>MAR</th><th>ABR</th><th>MAY</th><th>JUN</th><th>JUL</th><th>AGO</th><th>SEP</th><th>OCT</th><th>NOV</th><th>DIC</th></tr>
                         </thead>
                         <tbody id="tbody-real"></tbody>
                     </table>
@@ -155,7 +155,7 @@
             <div class="tab-pane fade" id="pills-estrategias">
                 <div class="alert alert-danger bg-opacity-10 border-danger py-2 small d-flex align-items-center">
                     <i class="bi bi-link-45deg me-2 fs-5 text-danger"></i>
-                    <div><strong>Portafolio Digital:</strong> Es REQUISITO pegar el link (Drive, Web, Video) de la evidencia para cada estrategia registrada.</div>
+                    <div><strong>Portafolio Digital:</strong> Es REQUISITO pegar el link (Drive, Web, Video) de la evidencia.</div>
                 </div>
                 <div id="container-strategies" class="mb-4"></div>
                 <div class="text-center my-4">
@@ -206,11 +206,11 @@
         </tr>
     </table>
 
-    <h5 style="border-bottom: 1px solid #888; padding-bottom: 2px; font-size: 12px; margin-top: 10px; color: #198754;">I. PLANIFICACIÓN ANUAL</h5>
-    <table class="pdf-table"><thead><tr><th width="12%">CÓDIGO</th><th>DESCRIPCIÓN OA / INDICADOR</th><th width="12%">MES INICIO</th></tr></thead><tbody id="pdf-tbody-plan"></tbody></table>
+    <h5 style="border-bottom: 1px solid #888; padding-bottom: 2px; font-size: 12px; margin-top: 10px; color: #198754;">I. PLANIFICACIÓN ANUAL (Objetivos Priorizados)</h5>
+    <table class="pdf-table"><thead><tr><th width="15%">CÓDIGO</th><th>DESCRIPCIÓN OA / INDICADOR</th><th width="12%">MES INICIO</th></tr></thead><tbody id="pdf-tbody-plan"></tbody></table>
 
     <h5 style="border-bottom: 1px solid #888; padding-bottom: 2px; font-size: 12px; margin-top: 20px; color: #198754;">II. MATRIZ DE COBERTURA REAL</h5>
-    <table class="pdf-table"><thead><tr><th width="25%">OA</th><th>MAR</th><th>ABR</th><th>MAY</th><th>JUN</th><th>JUL</th><th>AGO</th><th>SEP</th><th>OCT</th><th>NOV</th><th>DIC</th></tr></thead><tbody id="pdf-tbody-real"></tbody></table>
+    <table class="pdf-table"><thead><tr><th width="20%">CÓDIGO</th><th>MAR</th><th>ABR</th><th>MAY</th><th>JUN</th><th>JUL</th><th>AGO</th><th>SEP</th><th>OCT</th><th>NOV</th><th>DIC</th></tr></thead><tbody id="pdf-tbody-real"></tbody></table>
     
     <h5 style="border-bottom: 1px solid #888; padding-bottom: 2px; font-size: 12px; margin-top: 20px; color: #198754;">III. ESTRATEGIAS Y EVIDENCIAS DIGITALES</h5>
     <table class="pdf-table">
@@ -229,8 +229,10 @@
         <button onclick="borrarCard(this)" class="btn-close position-absolute top-0 end-0 m-2 no-print"></button>
         <div class="card-body py-2">
             <div class="row align-items-center">
-                <div class="col-md-2 mb-2 mb-md-0"><select class="form-select fw-bold text-success input-code"><script>for(let i=1;i<=30;i++) document.write(`<option value="OA${i}">OA ${i}</option>`);</script><option value="OAA">OAA</option><option value="OAT">OAT</option></select></div>
-                <div class="col-md-8 mb-2 mb-md-0"><textarea class="form-control border-0 bg-transparent input-desc" rows="2" placeholder="Pegue aquí el Objetivo o Indicador..."></textarea></div>
+                <div class="col-md-2 mb-2 mb-md-0">
+                    <select class="form-select fw-bold text-success input-code"></select>
+                </div>
+                <div class="col-md-8 mb-2 mb-md-0"><textarea class="form-control border-0 bg-transparent input-desc" rows="2" placeholder="Describa el OA, AE o Criterio de Evaluación..."></textarea></div>
                 <div class="col-md-2"><select class="form-select form-select-sm input-mes"><option value="Anual">Anual</option><option value="MAR">Marzo</option><option value="ABR">Abril</option><option value="MAY">Mayo</option><option value="JUN">Junio</option><option value="JUL">Julio</option><option value="AGO">Agosto</option><option value="SEP">Septiembre</option><option value="OCT">Octubre</option><option value="NOV">Noviembre</option><option value="DIC">Diciembre</option></select></div>
             </div>
         </div>
@@ -251,7 +253,6 @@
                 <div class="col-md-9">
                     <label class="small text-muted">Descripción de la Estrategia:</label>
                     <textarea class="form-control border-0 bg-transparent input-st-desc mb-2" rows="2" placeholder="Ej: Prueba Sumativa Unidad 1..."></textarea>
-                    
                     <div class="input-group input-group-sm">
                         <span class="input-group-text bg-light text-secondary border-0"><i class="bi bi-link-45deg"></i></span>
                         <input type="text" class="form-control input-st-url bg-light border-0" placeholder="Pegar enlace a evidencia (Drive/Web)..." oninput="verificarLink(this)">
@@ -277,9 +278,9 @@
 
     // HELPERS
     window.borrarCard = (b) => b.closest('.card').remove(); 
-    window.agregarFilaExtra = () => { const c=prompt("Código Extra:"); if(c) addFilaWeb(c.toUpperCase(),"Extra",[],true); };
+    // "Extra" manual
+    window.agregarFilaExtra = () => { const c=prompt("Código Extra (ej: AE 5):"); if(c) addFilaWeb(c.toUpperCase(),"Extra (Agregado Manualmente)",[],true); };
     
-    // Función para mostrar/ocultar botón "Ir"
     window.verificarLink = (input) => {
         const btn = input.nextElementSibling;
         if(input.value && input.value.trim() !== ""){
@@ -368,45 +369,81 @@
              if(cod) oasDisponibles.push(cod);
         });
 
+        // Unique
+        const uniqueOAs = [...new Set(oasDisponibles)];
+
         document.querySelectorAll('.input-st-oa').forEach(select => {
             const valActual = select.value;
             select.innerHTML = '<option value="General">Transversal / General</option>';
-            oasDisponibles.forEach(oa => {
+            uniqueOAs.forEach(oa => {
                 select.innerHTML += `<option value="${oa}">${oa}</option>`;
             });
-            if(valActual && (valActual==='General' || oasDisponibles.includes(valActual))) select.value = valActual;
+            if(valActual && (valActual==='General' || uniqueOAs.includes(valActual))) select.value = valActual;
         });
     };
 
+    // --- FUNCIÓN INTELIGENTE DE AGRUPACIÓN Y SINCRONIZACIÓN ---
     window.sincronizarCobertura = () => {
-        const tbW=document.getElementById('tbody-real'); tbW.innerHTML="";
-        const tbP1=document.getElementById('pdf-tbody-plan'); tbP1.innerHTML="";
-        const tbP2=document.getElementById('pdf-tbody-real'); tbP2.innerHTML="";
-        const tbP3=document.getElementById('pdf-tbody-estrategias'); tbP3.innerHTML=""; 
+        const tbW = document.getElementById('tbody-real'); 
+        const tbP1 = document.getElementById('pdf-tbody-plan'); 
+        const tbP2 = document.getElementById('pdf-tbody-real'); 
+        const tbP3 = document.getElementById('pdf-tbody-estrategias'); 
 
-        let vis=new Set(); const ms=["MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"];
-        const realData = cursoActual[getKey('real')] || [];
+        // Limpieza Visual
+        tbW.innerHTML = "";
+        tbP1.innerHTML = "";
+        tbP2.innerHTML = "";
+        tbP3.innerHTML = ""; 
+
+        const ms = ["MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"];
+        const realDataGuardada = cursoActual[getKey('real')] || [];
+
+        // MAPA DE AGRUPACIÓN (Clave: Código OA)
+        const mapaAgrupado = new Map();
 
         document.querySelectorAll('#container-plan .card-oa').forEach(f => {
-            const c=f.querySelector('.input-code').value, d=f.querySelector('.input-desc').value.trim()||"-", m=f.querySelector('.input-mes').value;
-            const sv=realData.find(r=>r.codigo===c); const active=sv?sv.meses:[];
-            
-            addFilaWeb(c,d,active,false);
-            
-            tbP1.innerHTML+=`<tr><td style="text-align:center;"><b>${c}</b></td><td>${d}</td><td style="text-align:center;">${m}</td></tr>`;
-            let cells=""; ms.forEach(k=>cells+=`<td class="pdf-check">${active.includes(k)?'X':''}</td>`);
-            tbP2.innerHTML+=`<tr><td><b>${c}</b></td>${cells}</tr>`;
-            vis.add(c);
-        });
+            const codigo = f.querySelector('.input-code').value;
+            const desc = f.querySelector('.input-desc').value.trim() || "-"; 
+            const mes = f.querySelector('.input-mes').value;
 
-        realData.forEach(r=>{
-            if(!vis.has(r.codigo)){
-                addFilaWeb(r.codigo,"Objetivo Extra",r.meses,true);
-                let cells=""; ms.forEach(k=>cells+=`<td class="pdf-check">${r.meses.includes(k)?'X':''}</td>`);
-                tbP2.innerHTML+=`<tr><td><b>${r.codigo} (Extra)</b></td>${cells}</tr>`;
+            if(!mapaAgrupado.has(codigo)){
+                mapaAgrupado.set(codigo, {
+                    codigo: codigo,
+                    desc: desc,
+                    mes: mes,
+                    count: 1
+                });
+            } else {
+                const item = mapaAgrupado.get(codigo);
+                item.count++;
             }
         });
 
+        // Generar filas basadas en elementos únicos
+        mapaAgrupado.forEach((val) => {
+            // Recuperar y fusionar meses de todos los registros coincidentes en BD
+            const coincidencias = realDataGuardada.filter(r => r.codigo === val.codigo);
+            let mesesFusionados = new Set();
+            coincidencias.forEach(c => c.meses.forEach(m => mesesFusionados.add(m)));
+            const mesesActivos = Array.from(mesesFusionados);
+
+            // Texto inteligente
+            const descDisplay = val.count > 1 
+                ? `${val.desc} ... (y ${val.count-1} definiciones más)` 
+                : val.desc;
+
+            // Generar fila WEB (Una sola fila agrupada)
+            addFilaWeb(val.codigo, descDisplay, mesesActivos, false);
+            
+            // Generar filas PDF
+            tbP1.innerHTML += `<tr><td style="text-align:center;"><b>${val.codigo}</b></td><td>${descDisplay}</td><td style="text-align:center;">${val.mes}</td></tr>`;
+            
+            let cells = ""; 
+            ms.forEach(k => cells += `<td class="pdf-check">${mesesActivos.includes(k)?'X':''}</td>`);
+            tbP2.innerHTML += `<tr><td><b>${val.codigo}</b></td>${cells}</tr>`;
+        });
+
+        // Estrategias
         const estrategiasData = [];
         document.querySelectorAll('.strategy-item').forEach(f => {
             const oa = f.querySelector('.input-st-oa').value;
@@ -424,19 +461,32 @@
             tbP3.innerHTML = `<tr><td colspan="3" style="text-align:center; color: #777;">Sin estrategias registradas</td></tr>`;
         }
 
-        document.getElementById('pdf-docente').innerText=docenteNombre; 
-        document.getElementById('pdf-asignatura').innerText=cursoActual.nombre;
-        document.getElementById('pdf-anio-val').innerText=anioActual;
-        document.getElementById('pdf-anio-title').innerText=anioActual;
-        document.getElementById('pdf-nivel').innerText=cursoActual.nivel; 
-        document.getElementById('pdf-fecha-header').innerText=new Date().toLocaleDateString();
+        if(cursoActual) {
+            document.getElementById('pdf-docente').innerText = docenteNombre; 
+            document.getElementById('pdf-asignatura').innerText = cursoActual.nombre;
+            document.getElementById('pdf-anio-val').innerText = anioActual;
+            document.getElementById('pdf-anio-title').innerText = anioActual;
+            document.getElementById('pdf-nivel').innerText = cursoActual.nivel; 
+            document.getElementById('pdf-fecha-header').innerText = new Date().toLocaleDateString();
+        }
     };
 
-    window.agregarFilaPlan = (c="OA1",d="",m="MAR") => { 
+    window.agregarFilaPlan = (c="OA 1",d="",m="MAR") => { 
         const t=document.getElementById('tpl-plan').content.cloneNode(true); 
         t.querySelector('.input-code').value=c; 
         t.querySelector('.input-desc').value=d; 
         t.querySelector('.input-mes').value=m; 
+        
+        // Auto-corrección visual para códigos antiguos sin espacio (OA1 -> OA 1)
+        const select = t.querySelector('.input-code');
+        if (c.startsWith("OA") && !c.includes(" ")) {
+             const fixedC = c.replace("OA", "OA ");
+             select.value = fixedC;
+             if (select.value === "") select.value = c; 
+        } else {
+             select.value = c;
+        }
+
         document.getElementById('container-plan').appendChild(t); 
     };
 
@@ -444,17 +494,14 @@
         const t=document.getElementById('tpl-strategy').content.cloneNode(true);
         const sel = t.querySelector('.input-st-oa');
         const inpUrl = t.querySelector('.input-st-url');
-        
         sel.value = oa; 
         t.querySelector('.input-st-desc').value = desc;
         inpUrl.value = url;
-        
         if(url) {
             const btn = t.querySelector('.btn-visit-link');
             btn.href = url.startsWith('http') ? url : 'https://' + url;
             btn.style.display = 'inline-block';
         }
-
         document.getElementById('container-strategies').appendChild(t);
         window.actualizarListaOA_Estrategias(); 
         const last = document.getElementById('container-strategies').lastElementChild;
@@ -468,50 +515,23 @@
         document.getElementById('tbody-real').appendChild(tr);
     };
 
-    // --- FUNCIÓN GUARDAR MODIFICADA (NO BLOQUEA, SOLO ADVIERTE) ---
     window.guardarTodo = async () => {
         if(!cursoActual)return;
-        
         let nStrategies = [];
         let faltaLink = false;
 
         document.querySelectorAll('.strategy-item').forEach(f => {
             const desc = f.querySelector('.input-st-desc').value.trim();
             const url = f.querySelector('.input-st-url').value.trim();
-            
             if(desc.length > 5) {
-                if(url.length < 5) faltaLink = true; // Detecta si falta link
-                nStrategies.push({
-                    oa: f.querySelector('.input-st-oa').value,
-                    desc: desc,
-                    url: url
-                });
+                if(url.length < 5) faltaLink = true; 
+                nStrategies.push({oa: f.querySelector('.input-st-oa').value, desc: desc, url: url});
             }
         });
 
-        // 1. VALIDACIÓN DE LINKS (PERMITE GUARDAR AVANCES)
         if(faltaLink) {
-            const deseaGuardarAvance = confirm("⚠️ ATENCIÓN: FALTAN EVIDENCIAS\n\nRecuerda completar todas las estrategias, estás grabando avances.\n\n¿Deseas guardar de todas formas?");
-            
-            if(!deseaGuardarAvance) {
-                const tabEl = document.querySelector('#tab-estrategias');
-                const tab = new bootstrap.Tab(tabEl);
-                tab.show();
-                return; // Solo detiene si el usuario dice "Cancelar"
-            }
-        }
-
-        // 2. VALIDACIÓN DE CANTIDAD DE ESTRATEGIAS (PERMITE GUARDAR AVANCES)
-        if(nStrategies.length < 3) {
-            // Solo mostramos esta alerta si no mostramos la anterior (para no saturar)
-            if(!faltaLink) {
-                const continuar = confirm(`⚠️ AVISO: ESTRATEGIAS INCOMPLETAS (${nStrategies.length}/3)\n\n¿Deseas guardar los avances de COBERTURA de todas formas?\n(Se guardará como borrador).`);
-                if(!continuar) {
-                    const tabEl = document.querySelector('#tab-estrategias');
-                    const tab = new bootstrap.Tab(tabEl);
-                    tab.show();
-                    return; 
-                }
+            if(!confirm("⚠️ FALTAN EVIDENCIAS\n¿Guardar de todas formas?")) {
+                new bootstrap.Tab(document.querySelector('#tab-estrategias')).show(); return;
             }
         }
 
@@ -520,6 +540,7 @@
         try {
             let nP=[]; document.querySelectorAll('#container-plan .card-oa').forEach(f=>{ nP.push({codigo:f.querySelector('.input-code').value, desc:f.querySelector('.input-desc').value.trim(), mes:f.querySelector('.input-mes').value}); });
             
+            // Leemos la cobertura desde la tabla WEB (que ya está unificada/agrupada)
             let nR=[]; const trs=document.querySelectorAll('.fila-cobertura');
             if(trs.length>0) trs.forEach(tr=>{ let m=[]; tr.querySelectorAll('input:checked').forEach(c=>m.push(c.dataset.mes)); nR.push({codigo:tr.dataset.codigo, meses:m, logrado:m.length>0, observaciones:[]}); });
             else nR=cursoActual[getKey('real')]||[];
@@ -530,12 +551,7 @@
             updateObj[getKey('st')] = nStrategies;
 
             await updateDoc(doc(db,"cursos",cursoActual.id), updateObj); 
-            
-            if(faltaLink || nStrategies.length < 3) {
-                alert(`✅ AVANCE GUARDADO.\nRecuerda completar los links y estrategias faltantes para el reporte final.`);
-            } else {
-                alert(`✅ Guardado Exitoso y Completo (Año ${anioActual})`);
-            }
+            alert(`✅ Guardado Exitoso (Año ${anioActual})`);
 
         } catch(e){ alert("Error: "+e.message); } finally { btn.disabled=false; btn.innerHTML=txt; }
     };
@@ -557,8 +573,35 @@
     document.addEventListener("DOMContentLoaded",()=>{ 
         const s=document.querySelector('#tpl-plan').content.querySelector('.input-code'); 
         s.innerHTML=""; 
-        for(let i=1;i<=30;i++) { let o=document.createElement("option"); o.value="OA"+i; o.innerText="OA "+i; s.appendChild(o); } 
-        ["OAA","OAT"].forEach(v=>{let o=document.createElement("option"); o.value=v; o.innerText=v; s.appendChild(o)}); 
+        
+        let def = document.createElement("option"); def.value=""; def.innerText="-- Sel --"; s.appendChild(def);
+
+        let optG = document.createElement("optgroup"); optG.label = "Formación General (OA)";
+        for(let i=1;i<=30;i++) { 
+            let o=document.createElement("option"); o.value="OA "+i; o.innerText="OA "+i; optG.appendChild(o); 
+        } 
+        s.appendChild(optG);
+
+        let optAE = document.createElement("optgroup"); optAE.label = "Técnico Prof. (AE)";
+        for(let i=1;i<=15;i++) { 
+            let o=document.createElement("option"); o.value="AE "+i; o.innerText="AE "+i; optAE.appendChild(o); 
+        }
+        s.appendChild(optAE);
+
+        let optCE = document.createElement("optgroup"); optCE.label = "Criterios Evaluación (CE)";
+        for(let unidad=1; unidad<=8; unidad++){
+            for(let criterio=1; criterio<=10; criterio++){
+                let code = `CE ${unidad}.${criterio}`;
+                let o=document.createElement("option"); o.value=code; o.innerText=code; optCE.appendChild(o);
+            }
+        }
+        s.appendChild(optCE);
+
+        let optT = document.createElement("optgroup"); optT.label = "Transversales";
+        ["OAA","OAT"].forEach(v=>{
+            let o=document.createElement("option"); o.value=v; o.innerText=v; optT.appendChild(o)
+        });
+        s.appendChild(optT);
     });
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
