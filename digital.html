@@ -31,7 +31,7 @@
             th { background-color: #f0f0f0; font-weight: bold; text-align: center; }
             .col-clase { width: 5%; text-align: center; }
             .print-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px; }
-            .print-logo { height: 60px; }
+            .print-logo { height: 60px; object-fit: contain; }
             .print-info { text-align: right; font-size: 11pt; }
         }
         .print-container { display: none; }
@@ -79,8 +79,11 @@
                         setRawCursos(cursosData);
                         const nivelesUnicos = [...new Set(cursosData.map(c => c.nivel))].sort();
                         setListas({ docentes: docentesList, niveles: nivelesUnicos, asignaturas: [] });
+                    } catch (error) { 
+                        alert("Error Bitácora: " + error.message); 
+                    } finally {
                         setLoading(false);
-                    } catch (error) { alert("Error Bitácora: " + error.message); }
+                    }
                 };
                 conectarBitacora();
             }, []);
@@ -104,7 +107,10 @@
                         const distInicial = {};
                         planAnual.forEach(oa => { if (oa.mes && oa.mes !== 'Anual') distInicial[oa.codigo] = oa.mes; });
                         setMonthlyDist(distInicial); 
-                    } else { alert("⚠️ Advertencia: No hay OAs anuales en la Bitácora."); }
+                    } else { 
+                        // ERROR CORREGIDO: Se agregó la comilla inicial que faltaba
+                        alert("⚠️ Advertencia: No hay OAs anuales en la Bitácora."); 
+                    }
                 }
 
                 setLoading(true);
@@ -118,7 +124,7 @@
                         if(datosGuardados.monthly_distribution) setMonthlyDist(datosGuardados.monthly_distribution);
                         if(datosGuardados.detailed_planning) setClassPlans(datosGuardados.detailed_planning);
                         setPlanStatus(datosGuardados.estado || 'Borrador');
-                        alert(`📂 ¡Avance Recuperado!`);
+                        alert("📂 ¡Avance Recuperado!");
                     } else {
                         setCurrentPlanId(null);
                         setClassPlans({});
@@ -138,7 +144,13 @@
                 setClassPlans({ ...classPlans, [editingMonth]: updatedClasses });
             };
             const updateDua = (classId, p) => {
-                const updatedClasses = classPlans[editingMonth].map(c => c.id === classId ? { ...c, dua: { ...c.dua, [p]: !c.dua[p] } } : c);
+                const updatedClasses = classPlans[editingMonth].map(c => {
+                    if (c.id === classId) {
+                        const currentDua = c.dua || { p1: false, p2: false, p3: false };
+                        return { ...c, dua: { ...currentDua, [p]: !currentDua[p] } };
+                    }
+                    return c;
+                });
                 setClassPlans({ ...classPlans, [editingMonth]: updatedClasses });
             };
             const deleteClass = (classId) => {
@@ -150,7 +162,7 @@
             const saveFinal = async (esEnvioUTP = false) => {
                 const monthClasses = classPlans[editingMonth] || [];
                 if (esEnvioUTP && monthClasses.length < 4) {
-                    alert(`⚠️ BLOQUEO DE CALIDAD\n\nSolo tienes ${monthClasses.length} clases. Mínimo 4 requeridas para enviar.`);
+                    alert("⚠️ BLOQUEO DE CALIDAD\n\nSolo tienes " + monthClasses.length + " clases. Mínimo 4 requeridas para enviar.");
                     return; 
                 }
                 const estadoFinal = esEnvioUTP ? 'Enviado UTP' : 'Borrador';
@@ -166,7 +178,6 @@
                 } catch(e) { alert("Error: " + e.message); }
             };
 
-            // FUNCIONALIDAD EXPORTAR A WORD
             const downloadWord = () => {
                 const monthClasses = classPlans[editingMonth] || [];
                 if(monthClasses.length === 0) return alert("No hay clases para descargar.");
@@ -241,7 +252,7 @@
                 document.body.removeChild(link);
             };
 
-            const getDuaText = (d) => { let t=[]; if(d.p1)t.push("1. Pres"); if(d.p2)t.push("2. Acc"); if(d.p3)t.push("3. Imp"); return t.join(", "); };
+            const getDuaText = (d) => { if (!d) return ""; let t=[]; if(d.p1)t.push("1. Pres"); if(d.p2)t.push("2. Acc"); if(d.p3)t.push("3. Imp"); return t.join(", "); };
 
             if (loading) return React.createElement("div", {className: "min-h-screen flex items-center justify-center bg-gray-100"}, "Cargando...");
             if (step === 0) return React.createElement("div", { className: "max-w-md mx-auto mt-10 no-print" },
@@ -265,7 +276,17 @@
                     ),
                     React.createElement("div", { className: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" },
                         MONTHS.map(month => {
-                            const oasDelMes = oasAnualesBitacora.filter(oa => monthlyDist[oa.codigo] === month);
+                            // FILTRO A PRUEBA DE FALLOS: ELIMINAR DUPLICADOS
+                            const oasDelMesRaw = oasAnualesBitacora.filter(oa => monthlyDist[oa.codigo] === month);
+                            const uniqueOasDelMes = [];
+                            const seenCodes = new Set();
+                            oasDelMesRaw.forEach(oa => {
+                                if (oa.codigo && !seenCodes.has(oa.codigo)) {
+                                    seenCodes.add(oa.codigo);
+                                    uniqueOasDelMes.push(oa);
+                                }
+                            });
+
                             const classesCreated = classPlans[month]?.length || 0;
                             return React.createElement("div", { key: month, className: "bg-white p-4 rounded-xl border shadow-sm flex flex-col justify-between" },
                                 React.createElement("div", null,
@@ -273,7 +294,7 @@
                                         React.createElement("h4", { className: "font-bold text-gray-800" }, month),
                                         classesCreated > 0 && React.createElement("span", { className: "bg-purple-100 text-purple-800 text-[10px] px-2 py-1 rounded-full font-bold" }, `${classesCreated} Clases`)
                                     ),
-                                    oasDelMes.length > 0 ? React.createElement("ul", { className: "space-y-1 mb-2" }, oasDelMes.map(oa => React.createElement("li", { key: oa.codigo, className: "text-[10px] bg-green-50 text-green-800 px-1 rounded truncate" }, oa.codigo))) : React.createElement("p", { className: "text-xs text-gray-400 italic mb-3" }, "Disponibles Anuales")
+                                    uniqueOasDelMes.length > 0 ? React.createElement("ul", { className: "space-y-1 mb-2" }, uniqueOasDelMes.map(oa => React.createElement("li", { key: oa.codigo, className: "text-[10px] bg-green-50 text-green-800 px-1 rounded truncate" }, oa.codigo))) : React.createElement("p", { className: "text-xs text-gray-400 italic mb-3" }, "Disponibles Anuales")
                                 ),
                                 React.createElement("button", { onClick: () => { setEditingMonth(month); setStep(3); }, className: "w-full py-2 bg-indigo-600 text-white rounded text-sm font-bold flex items-center justify-center gap-2" }, React.createElement("i", { className: "fa-solid fa-pen-to-square" }), "Planificar")
                             );
@@ -284,8 +305,27 @@
 
             if (step === 3 && editingMonth) {
                 const monthClasses = classPlans[editingMonth] || [];
-                const oasMes = oasAnualesBitacora.filter(oa => monthlyDist[oa.codigo] === editingMonth);
-                const oasAnual = oasAnualesBitacora.filter(oa => oa.mes === 'Anual');
+                
+                // FILTRO A PRUEBA DE FALLOS: SELECTOR DE OAs
+                const oasMesRaw = oasAnualesBitacora.filter(oa => monthlyDist[oa.codigo] === editingMonth);
+                const uniqueOasMes = [];
+                const seenMes = new Set();
+                oasMesRaw.forEach(oa => {
+                    if(oa.codigo && !seenMes.has(oa.codigo)){
+                        seenMes.add(oa.codigo);
+                        uniqueOasMes.push(oa);
+                    }
+                });
+
+                const oasAnualRaw = oasAnualesBitacora.filter(oa => oa.mes === 'Anual');
+                const uniqueOasAnual = [];
+                const seenAnual = new Set();
+                oasAnualRaw.forEach(oa => {
+                    if(oa.codigo && !seenAnual.has(oa.codigo)){
+                        seenAnual.add(oa.codigo);
+                        uniqueOasAnual.push(oa);
+                    }
+                });
 
                 return React.createElement("div", { className: "max-w-7xl mx-auto mt-4 pb-20" },
                     React.createElement("div", { className: "glass p-4 rounded-xl shadow-md mb-6 sticky top-2 z-50 flex flex-col md:flex-row justify-between items-center gap-4 no-print" },
@@ -335,8 +375,12 @@
                                             React.createElement("label", { className: "label-detail" }, "Objetivo de Aprendizaje"),
                                             React.createElement("select", { className: "input-detail bg-gray-50 font-bold text-green-700", value: clase.oa_ref, onChange: (e) => updateClassField(clase.id, 'oa_ref', e.target.value) },
                                                 React.createElement("option", { value: "" }, "-- Seleccionar OA --"),
-                                                oasMes.length > 0 && React.createElement("optgroup", { label: `📍 Prioritarios de ${editingMonth}` }, oasMes.map(oa => React.createElement("option", { key: oa.codigo, value: oa.codigo }, `${oa.codigo} - ${oa.desc.substring(0,50)}...`))),
-                                                React.createElement("optgroup", { label: "📅 Transversales / Anuales" }, oasAnual.map(oa => React.createElement("option", { key: oa.codigo, value: oa.codigo }, `${oa.codigo} - ${oa.desc.substring(0,50)}...`))),
+                                                uniqueOasMes.length > 0 && React.createElement("optgroup", { label: `📍 Prioritarios de ${editingMonth}` }, 
+                                                    uniqueOasMes.map(oa => React.createElement("option", { key: oa.codigo, value: oa.codigo }, `${oa.codigo} - ${(oa.desc || "").substring(0,50)}...`))
+                                                ),
+                                                React.createElement("optgroup", { label: "📅 Transversales / Anuales" }, 
+                                                    uniqueOasAnual.map(oa => React.createElement("option", { key: oa.codigo, value: oa.codigo }, `${oa.codigo} - ${(oa.desc || "").substring(0,50)}...`))
+                                                ),
                                                 React.createElement("option", { value: "OTRO" }, "Otro / Repaso")
                                             )
                                         ),
@@ -354,9 +398,9 @@
                                     React.createElement("div", { className: "bg-gray-50 p-2 rounded border" },
                                         React.createElement("label", { className: "label-detail text-center mb-2" }, "DUA"),
                                         React.createElement("div", { className: "flex flex-col gap-1" },
-                                            React.createElement("label", { className: "flex items-center gap-2 text-xs" }, React.createElement("input", { type: "checkbox", checked: clase.dua.p1, onChange: () => updateDua(clase.id, 'p1') }), "1. Presentación"),
-                                            React.createElement("label", { className: "flex items-center gap-2 text-xs" }, React.createElement("input", { type: "checkbox", checked: clase.dua.p2, onChange: () => updateDua(clase.id, 'p2') }), "2. Acción"),
-                                            React.createElement("label", { className: "flex items-center gap-2 text-xs" }, React.createElement("input", { type: "checkbox", checked: clase.dua.p3, onChange: () => updateDua(clase.id, 'p3') }), "3. Implicación")
+                                            React.createElement("label", { className: "flex items-center gap-2 text-xs" }, React.createElement("input", { type: "checkbox", checked: (clase.dua && clase.dua.p1) || false, onChange: () => updateDua(clase.id, 'p1') }), "1. Presentación"),
+                                            React.createElement("label", { className: "flex items-center gap-2 text-xs" }, React.createElement("input", { type: "checkbox", checked: (clase.dua && clase.dua.p2) || false, onChange: () => updateDua(clase.id, 'p2') }), "2. Acción"),
+                                            React.createElement("label", { className: "flex items-center gap-2 text-xs" }, React.createElement("input", { type: "checkbox", checked: (clase.dua && clase.dua.p3) || false, onChange: () => updateDua(clase.id, 'p3') }), "3. Implicación")
                                         )
                                     )
                                 )
