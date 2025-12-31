@@ -3,273 +3,559 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión Docente - Privado</title>
+    <title>Gestión Docente - Plataforma Escolar</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         
-        /* ESTILOS ORIGINALES DE TU APP */
-        .grade-chip { cursor: pointer; transition: all 0.2s; user-select: none; }
-        .grade-chip:hover { transform: scale(1.15); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-        .grade-chip:active { transform: scale(0.95); }
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #1e293b; }
 
-        /* Estilo para el Login (Nuevo) */
-        #login-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(135deg, #1e1b4b 0%, #3730a3 100%);
-            z-index: 9999; display: flex; align-items: center; justify-content: center;
+        /* --- ESTILOS INTERFAZ --- */
+        .btn-action { transition: all 0.2s; }
+        .btn-action:hover { transform: translateY(-1px); }
+        
+        /* Estilo para las celdas de notas */
+        .grade-cell { min-width: 60px; text-align: center; }
+        .empty-grade { color: #cbd5e1; font-style: italic; font-size: 0.7rem; }
+
+        /* --- ESTILOS IMPRESIÓN --- */
+        .print-only { display: none; }
+        @media print {
+            @page { size: landscape; margin: 5mm; }
+            body { background-color: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; font-size: 9pt; }
+            .no-print { display: none !important; }
+            .print-only { display: flex; }
+            .printable-container { width: 100% !important; max-width: 100% !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; }
+            table { width: 100% !important; border-collapse: collapse; }
+            th, td { border: 1px solid #94a3b8 !important; padding: 2px 4px !important; }
+            
+            #printHeader { 
+                flex-direction: row; align-items: center; justify-content: center; gap: 20px; 
+                margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #0f172a; 
+            }
+            #printFooter { 
+                position: fixed; bottom: 0; width: 100%; text-align: center; 
+                font-size: 8pt; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 5px; 
+            }
         }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen text-slate-800">
+<body class="min-h-screen flex flex-col items-center py-6">
 
-    <div id="login-overlay">
-        <div class="bg-white p-8 rounded-2xl shadow-2xl w-96 text-center">
-            <div class="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4 text-indigo-600 text-2xl">
-                <i class="fa-solid fa-lock"></i>
+    <div id="loginOverlay" class="fixed inset-0 bg-slate-900 z-[100] flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 text-center">
+            <div class="mb-6">
+                <img src="logo.jpg" alt="Logo" class="h-24 mx-auto mb-4 object-contain">
+                <h1 class="text-2xl font-bold text-slate-800">Bienvenido Docente</h1>
+                <p class="text-slate-500 text-sm">Inicia sesión para gestionar tus cursos</p>
             </div>
-            <h2 class="text-2xl font-bold text-gray-800 mb-1">Acceso Docente</h2>
-            <p class="text-xs text-gray-500 mb-6">Tus notas, seguras y privadas.</p>
-
-            <div class="space-y-3 text-left">
-                <input type="email" id="txtEmail" placeholder="Correo" class="w-full p-3 border rounded-lg bg-gray-50 outline-none focus:ring-2 focus:ring-indigo-500">
-                <input type="password" id="txtPass" placeholder="Contraseña" class="w-full p-3 border rounded-lg bg-gray-50 outline-none focus:ring-2 focus:ring-indigo-500">
-                <button onclick="doLogin()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl transition shadow-lg">Ingresar</button>
-                <button onclick="doRegister()" class="w-full text-indigo-600 text-sm font-bold hover:underline mt-2">Crear cuenta nueva</button>
-            </div>
-            <p id="loginMsg" class="text-red-500 text-xs font-bold mt-4 min-h-[20px]"></p>
-        </div>
-    </div>
-
-    <div id="app-content" class="hidden max-w-7xl mx-auto p-4 md:p-6 fade-in">
-        
-        <div class="flex flex-col md:flex-row justify-between items-center mb-8 bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-            <div class="flex items-center gap-4 mb-4 md:mb-0">
-                <div class="w-12 h-12 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-xl shadow-md border-4 border-indigo-100">
-                    <span id="userInitial">U</span>
+            
+            <form id="loginForm" class="space-y-4 text-left">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Correo Electrónico</label>
+                    <input type="email" id="emailInput" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="docente@escuela.cl" required>
                 </div>
                 <div>
-                    <h2 id="userName" class="font-bold text-slate-800 text-lg">Profesor</h2>
-                    <div class="flex items-center gap-2">
-                        <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                        <p class="text-xs text-slate-500 font-medium uppercase tracking-wide">Conectado (Privado)</p>
-                    </div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Contraseña</label>
+                    <input type="password" id="passwordInput" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="••••••••" required>
                 </div>
-            </div>
-            
-            <div class="flex items-center gap-3">
-                <select id="yearSelector" onchange="changeYear()" class="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-indigo-500 block p-2.5 font-bold outline-none">
-                    <option value="2025">Año 2025</option>
-                    <option value="2026">Año 2026</option>
-                </select>
-                <button onclick="logout()" class="text-slate-400 hover:text-red-500 p-2 transition" title="Salir">
-                    <i class="fa-solid fa-right-from-bracket text-xl"></i>
-                </button>
-            </div>
-        </div>
-
-        <div class="mb-6 overflow-x-auto pb-2">
-            <div class="flex space-x-2" id="tabsContainer"></div>
-        </div>
-
-        <div class="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
-            <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                <h3 class="text-xl font-bold text-slate-800 flex items-center gap-2">
-                    <i class="fa-solid fa-graduation-cap text-indigo-500"></i>
-                    <span id="classTitle">Curso</span>
-                </h3>
-                <button onclick="addStudent()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold py-2 px-4 rounded-xl shadow-md transition flex items-center gap-2">
-                    <i class="fa-solid fa-plus"></i> Estudiante
-                </button>
-            </div>
-
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm text-left text-slate-600">
-                    <thead class="text-xs text-slate-400 uppercase bg-slate-50 border-b border-slate-100">
-                        <tr>
-                            <th class="px-6 py-4 font-bold w-16">#</th>
-                            <th class="px-6 py-4 font-bold">Nombre</th>
-                            <th class="px-6 py-4 font-bold text-center w-32">Promedio</th>
-                            <th class="px-6 py-4 font-bold">Notas</th>
-                            <th class="px-6 py-4 font-bold text-center w-24">Obs.</th>
-                            <th class="px-6 py-4 font-bold text-right w-24">Borrar</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody" class="divide-y divide-slate-100"></tbody>
-                </table>
-            </div>
-            
-            <div class="bg-slate-50 px-6 py-3 border-t border-slate-100 flex justify-between items-center">
-                <p class="text-xs text-slate-400 italic" id="statusIndicator">Sincronizado</p>
-            </div>
-        </div>
-    </div>
-
-    <div id="obsModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
-            <div class="bg-indigo-600 p-4 flex justify-between items-center text-white">
-                <h3 class="font-bold flex items-center gap-2"><i class="fa-regular fa-comment-dots"></i> Observaciones</h3>
-                <button onclick="closeModal()" class="hover:text-indigo-200"><i class="fa-solid fa-xmark text-xl"></i></button>
-            </div>
-            <div class="p-6">
-                <h4 id="modalStudentName" class="font-bold text-slate-800 mb-4 border-b pb-2">Estudiante</h4>
-                <div id="obsList" class="bg-slate-50 rounded-xl p-4 mb-4 h-48 overflow-y-auto space-y-3 border border-slate-100"></div>
-                <div class="relative">
-                    <textarea id="obsText" rows="3" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm" placeholder="Nueva observación..."></textarea>
-                    <button onclick="saveObs()" class="absolute bottom-3 right-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg p-2 shadow-sm transition"><i class="fa-solid fa-paper-plane"></i></button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // CONFIGURACIÓN FIREBASE (La de tu app de asistencia que funciona)
-        const firebaseConfig = { apiKey: "AIzaSyDUArOBUzzvulHYQGA7IvnEwo2jQbEa3Xs", authDomain: "attendance-ai-s81lt.firebaseapp.com", projectId: "attendance-ai-s81lt", storageBucket: "attendance-ai-s81lt.firebasestorage.app", messagingSenderId: "935781953186", appId: "1:935781953186:web:6c8a7a93ffad180d33b1fb" };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const auth = firebase.auth();
-
-        // ESTADO
-        let currentUser = null;
-        let masterData = {};
-        let currentYear = "2025";
-        let currentClass = "1° Medio A";
-        let currentStudentIdx = null;
-        const CLASSES = ["1° Medio A", "1° Medio B", "2° Medio A", "2° Medio B", "3° Medio A", "3° Medio B", "4° Medio A", "4° Medio B"];
-
-        // --- AUTENTICACIÓN ---
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                currentUser = user;
-                document.getElementById('login-overlay').classList.add('hidden');
-                document.getElementById('app-content').classList.remove('hidden');
-                document.getElementById('userName').innerText = user.email.split('@')[0];
-                document.getElementById('userInitial').innerText = user.email[0].toUpperCase();
-                loadData();
-            } else {
-                currentUser = null;
-                document.getElementById('login-overlay').classList.remove('hidden');
-                document.getElementById('app-content').classList.add('hidden');
-            }
-        });
-
-        function doLogin() {
-            const e = document.getElementById('txtEmail').value;
-            const p = document.getElementById('txtPass').value;
-            auth.signInWithEmailAndPassword(e, p).catch(err => document.getElementById('loginMsg').innerText = "Error: " + err.message);
-        }
-
-        function doRegister() {
-            const e = document.getElementById('txtEmail').value;
-            const p = document.getElementById('txtPass').value;
-            auth.createUserWithEmailAndPassword(e, p).then(() => alert("Cuenta creada!")).catch(err => document.getElementById('loginMsg').innerText = err.message);
-        }
-
-        function logout() { auth.signOut(); }
-
-        // --- DATOS PRIVADOS ---
-        async function loadData() {
-            // RUTA PRIVADA: docentes/{UID}/libro_clases/datos_maestros
-            const docRef = db.collection('docentes').doc(currentUser.uid).collection('libro_clases').doc('datos_maestros');
-            
-            // Escuchar cambios en tiempo real
-            docRef.onSnapshot(doc => {
-                if (doc.exists) {
-                    masterData = doc.data();
-                    if(!masterData["2025"]) masterData["2025"] = createStruct();
-                } else {
-                    masterData = { "2025": createStruct(), "2026": createStruct() };
-                    saveData();
-                }
-                renderApp();
-            });
-        }
-
-        function saveData() {
-            if(!currentUser) return;
-            const docRef = db.collection('docentes').doc(currentUser.uid).collection('libro_clases').doc('datos_maestros');
-            document.getElementById('statusIndicator').innerText = "Guardando...";
-            docRef.set(masterData).then(() => {
-                document.getElementById('statusIndicator').innerText = "Guardado ✅";
-            });
-        }
-
-        function createStruct() {
-            let s = { classes: {} };
-            CLASSES.forEach(c => s.classes[c] = []);
-            return s;
-        }
-
-        // --- RENDERIZADO (Tu código original) ---
-        function renderApp() {
-            // Tabs
-            const tc = document.getElementById('tabsContainer'); tc.innerHTML = '';
-            CLASSES.forEach(c => {
-                const btn = document.createElement('button');
-                const active = c === currentClass;
-                btn.className = `px-5 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition border ${active ? 'bg-indigo-600 text-white border-indigo-600 shadow' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'}`;
-                btn.innerText = c;
-                btn.onclick = () => { currentClass = c; renderApp(); };
-                tc.appendChild(btn);
-            });
-            document.getElementById('classTitle').innerText = currentClass;
-
-            // Tabla
-            const tb = document.getElementById('tableBody'); tb.innerHTML = '';
-            const list = masterData[currentYear].classes[currentClass] || [];
-
-            if(list.length === 0) {
-                tb.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-slate-400 italic">No hay estudiantes.</td></tr>`;
-                return;
-            }
-
-            list.forEach((s, idx) => {
-                const avg = s.grades.length ? (s.grades.reduce((a,b)=>a+b,0)/s.grades.length).toFixed(1) : '-';
-                const col = avg >= 6 ? 'text-green-600 bg-green-100' : (avg >= 4 ? 'text-blue-600 bg-blue-100' : 'text-red-600 bg-red-100');
                 
-                let notes = s.grades.map((g, i) => `<span onclick="editG(${idx},${i})" class="grade-chip inline-flex items-center justify-center w-8 h-8 mr-1 rounded-lg text-xs font-bold ${g>=4?'bg-indigo-50 text-indigo-700':'bg-red-50 text-red-700'}">${g}</span>`).join('');
-                notes += `<button onclick="addG(${idx})" class="inline-flex items-center justify-center w-8 h-8 rounded-lg border-2 border-dashed border-slate-300 text-slate-400 hover:text-indigo-500">+</button>`;
+                <div id="authErrorMsg" class="text-rose-500 text-xs text-center font-bold hidden"></div>
 
-                tb.innerHTML += `
-                    <tr class="bg-white border-b hover:bg-slate-50 transition">
-                        <td class="px-6 py-4 text-slate-400 text-xs">${idx+1}</td>
-                        <td class="px-6 py-4 font-bold text-slate-700">${s.name}</td>
-                        <td class="px-6 py-4 text-center"><span class="${avg==='-'?'bg-slate-100 text-slate-400':col} px-3 py-1 rounded-full text-xs font-bold">${avg}</span></td>
-                        <td class="px-6 py-4">${notes}</td>
-                        <td class="px-6 py-4 text-center"><button onclick="openObs(${idx})" class="text-slate-400 hover:text-indigo-600 relative"><i class="fa-solid fa-comment-dots text-lg"></i>${s.observations.length?`<span class="absolute -top-2 -right-2 w-3 h-3 bg-red-500 rounded-full border border-white"></span>`:''}</button></td>
-                        <td class="px-6 py-4 text-right"><button onclick="delS(${idx})" class="text-slate-300 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button></td>
-                    </tr>
-                `;
+                <button type="submit" id="btnLogin" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg transition shadow-md">
+                    Ingresar
+                </button>
+                
+                <div class="relative flex py-2 items-center">
+                    <div class="flex-grow border-t border-slate-200"></div>
+                    <span class="flex-shrink mx-4 text-slate-300 text-xs">O</span>
+                    <div class="flex-grow border-t border-slate-200"></div>
+                </div>
+
+                <button type="button" id="btnRegister" class="w-full bg-white border-2 border-slate-200 hover:bg-slate-50 text-slate-600 font-bold py-2 rounded-lg transition text-sm">
+                    Registrarse (Primera vez)
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div id="printHeader" class="print-only">
+        <img src="logo.jpg" alt="Logo" style="height: 50px; width: auto;">
+        <div style="text-align: left;">
+            <h1 style="font-size: 16pt; font-weight: bold; margin: 0; color: #0f172a;">Escuela Agrícola Sagrados Corazones</h1>
+            <p style="margin: 0; color: #475569; font-size: 10pt;">Gestión Académica</p>
+        </div>
+    </div>
+
+    <div class="printable-container w-full max-w-[95%] bg-white rounded-xl shadow-lg p-6">
+        
+        <div class="no-print text-center mb-6 relative">
+            <button id="btnLogout" class="absolute top-0 right-0 text-xs font-bold text-rose-500 hover:text-rose-700 hover:bg-rose-50 px-3 py-1 rounded border border-rose-200 transition">
+                Cerrar Sesión
+            </button>
+
+            <img src="logo.jpg" alt="Logo Escuela" class="h-20 mx-auto mb-3 object-contain hover:scale-105 transition-transform">
+            <h1 class="text-2xl font-bold text-slate-800">Control de Asistencia y Calificaciones</h1>
+            
+            <div class="mt-3 flex flex-col items-center justify-center gap-1">
+                <span class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-xs font-bold shadow-sm">
+                    Panel Docente
+                </span>
+                <span id="userIdDisplay" class="text-[10px] text-slate-400 font-mono mt-1">Conectando...</span>
+                <span id="statusDisplay" class="text-xs font-semibold text-emerald-600">● En línea</span>
+            </div>
+            
+            <p id="currentDate" class="text-slate-500 text-xs mt-3 font-medium capitalize"></p>
+        </div>
+
+        <div id="controlsContainer" class="no-print bg-slate-50 border border-slate-200 rounded-lg p-4 mb-6">
+             <div class="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
+                 
+                 <div class="md:col-span-1">
+                    <label class="block text-xs font-bold text-indigo-600 uppercase mb-1">Año Académico</label>
+                    <select id="yearSelector" class="w-full p-2 bg-white border-2 border-indigo-100 rounded shadow-sm focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-bold text-indigo-700 cursor-pointer">
+                        <option value="2025">2025</option>
+                        <option value="2026">2026</option>
+                    </select>
+                 </div>
+
+                 <div class="md:col-span-1">
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Clase</label>
+                    <select id="classSelector" class="w-full p-2 bg-white border border-slate-300 rounded shadow-sm focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-medium text-slate-800 cursor-pointer"></select>
+                 </div>
+                 
+                 <div class="md:col-span-1">
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Fecha</label>
+                    <input type="date" id="dateSelector" class="w-full p-2 bg-white border border-slate-300 rounded shadow-sm focus:ring-2 focus:ring-indigo-500 outline-none text-sm text-slate-700 font-medium cursor-pointer">
+                 </div>
+
+                 <div class="md:col-span-1">
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Nombre Evaluación</label>
+                    <input type="text" id="evalNameInput" placeholder="Ej: PRUEBA 1" class="w-full p-2 bg-white border border-slate-300 rounded shadow-sm focus:ring-2 focus:ring-indigo-500 outline-none text-sm text-slate-700 font-medium uppercase" />
+                 </div>
+
+                 <div class="md:col-span-1">
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Nuevo Estudiante</label>
+                    <div class="flex shadow-sm">
+                        <input type="text" id="studentNameInput" placeholder="Nombre" class="w-full p-2 border border-slate-300 rounded-l focus:ring-2 focus:ring-emerald-500 outline-none text-sm" />
+                        <button id="addStudentBtn" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-3 rounded-r transition">+</button>
+                    </div>
+                 </div>
+                 
+                 <div class="md:col-span-1">
+                     <button id="saveDataBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded shadow-md btn-action flex items-center justify-center gap-2 text-sm">
+                        <span>💾</span> Guardar
+                     </button>
+                 </div>
+             </div>
+        </div>
+
+        <div id="backToTableContainer" class="no-print hidden mb-4">
+             <button id="backToTableBtn" class="text-indigo-600 font-bold hover:underline flex items-center gap-1">← Volver al Panel Principal</button>
+        </div>
+
+        <div id="studentsTableContainer" class="printable-container overflow-x-auto">
+            <div id="loadingIndicator" class="text-center py-12">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-2"></div>
+                <p class="text-slate-400 font-medium">Cargando tus cursos...</p>
+            </div>
+            
+            <table id="mainTable" class="w-full hidden border-collapse text-sm">
+                <thead id="tableHeader" class="bg-slate-100 text-slate-500 uppercase text-xs font-bold border-b-2 border-slate-200">
+                    </thead>
+                <tbody id="tableBody" class="bg-white">
+                    </tbody>
+            </table>
+        </div>
+
+        <div id="classReportContainer" class="hidden mt-4 printable-container overflow-x-auto"></div>
+        <div id="classDetailsContainer" class="hidden mt-4 printable-container overflow-x-auto"></div>
+        
+        <div id="reportButtons" class="no-print mt-8 pt-6 border-t border-slate-100 flex flex-wrap justify-center gap-4">
+            <button id="showReportBtn" class="px-5 py-2 bg-white border border-slate-300 rounded-full text-slate-700 font-bold shadow-sm hover:bg-slate-50 transition text-sm">📊 Resumen</button>
+            <button id="showDetailedReportBtn" class="px-5 py-2 bg-white border border-slate-300 rounded-full text-slate-700 font-bold shadow-sm hover:bg-slate-50 transition text-sm">📋 Detallado</button>
+            <button id="printReportBtn" class="px-5 py-2 bg-slate-800 text-white rounded-full font-bold shadow-md hover:bg-slate-900 transition text-sm flex items-center gap-2">🖨️ Imprimir</button>
+        </div>
+    </div>
+
+    <div id="observationModal" class="no-print fixed inset-0 bg-slate-900/50 hidden items-center justify-center z-50 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="bg-indigo-600 p-3 flex justify-between items-center">
+                <h3 class="text-md font-bold text-white flex items-center gap-2"><span>💬</span> <span id="modalTitle">Observaciones</span></h3>
+                <button id="closeObservationModalBtn" class="text-white hover:text-gray-200 font-bold text-lg leading-none">&times;</button>
+            </div>
+            <div class="p-4 overflow-y-auto bg-slate-50 flex-1">
+                <div id="observationHistory" class="space-y-2 mb-4"></div>
+                <div class="bg-white p-2 rounded border border-slate-200 shadow-sm">
+                    <label class="text-xs font-bold text-slate-400 uppercase mb-1 block">Fecha de Registro</label>
+                    <input type="date" id="obsDateInput" class="w-full mb-2 p-1 border border-slate-300 rounded text-sm text-slate-600 font-bold">
+                    
+                    <label class="text-xs font-bold text-slate-400 uppercase mb-1 block">Nueva Observación</label>
+                    <textarea id="newObservationText" class="w-full text-sm text-slate-700 border border-slate-200 rounded p-2 focus:ring-2 focus:ring-indigo-500 outline-none resize-none h-20 placeholder:text-slate-300" placeholder="Escribe aquí..."></textarea>
+                </div>
+            </div>
+            <div class="p-3 bg-white border-t border-slate-100 flex justify-end">
+                <button id="saveObservationBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1.5 px-4 rounded shadow transition text-sm">Guardar</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="printFooter" class="print-only">Plataforma Docente • Escuela Agrícola Sagrados Corazones</div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // CONFIGURACIÓN
+        const CLAVE_DOCENTE = "ProfeAle"; 
+        const BACKUP_DATA = {
+            "Primero Medio A": ['ALBURQUENQUE DEL GRECCO EMILYA ANTONIA', 'ANABALÓN BELTRÁN BENJAMÍN NICOLÁS', 'CONTRERAS SALGADO HADEEY ALEJANDRA', 'FERRADA ALBORNOZ AGUSTÍN ALEXIS', 'HERNÁNDEZ FERNÁNDEZ DHARIEN ALEXSANDER', 'IBÁÑEZ GONZÁLEZ FERNANDA MAGDALENA', 'LAGOS LASTRA ALEXANDRA DANAE', 'LÓPEZ LÓPEZ LUCIANO ANTONIO', 'MALDONADO FLORES ANTONELLA BELÉN', 'MARIN MARÍN IGNACIO ANTONIO', 'MONTECINO DÍAZ VALESKA BELÉN', 'MUÑOZ CONTRERAS LUIS GABRIEL', 'MUÑOZ LUNA ROGER JOEL', 'NAVARRO VILLANUEVA KARLA PAZ', 'ORELLANA ARRIAGADA SEBASTIÁN ANDRÉS', 'QUEZADA NARANJO FELIPE ALONSO', 'QUINTEROS VERGARA FERNANDA FLORENCIA', 'RAMÍREZ VILLALOBOS DUVAN EMILIO', 'SANTANDER LÓPEZ MARÍA JOSÉ', 'TAPIA CASTILLA JEANFRANCO PATRICK', 'URBINA CÁCERES FRANCHESCA POULETTE', 'VÁSQUEZ ZALDUENDO AMANDA ISABEL', 'ZABALAGA COFRÉ DAMIÁN ANDRÉS', 'BAEZ DONOSO LUKAS ALFONSO', 'MESA DÍAZ GONZALO IGNACIO', 'BAREA SALGADO SERGIO ALEXANDER'],
+            "Primero Medio B": ['ARAVENA ZÚÑIGA NOEMÍ JESÚS DE LAS ESTRELLAS', 'ASTUDILLO CAMPOS CRISTÓBAL ANTONIO', 'ASTUDILLO VÁSQUEZ BRUNO FERNANDO LEÓN', 'CASTILLO MUÑOZ RENÉ ANTONIO', 'CID CERDA MARÍA EVANGELINA', 'CUMINAO VIDAL CATALINA ANDREA', 'DÍAZ MALUENDA MIGUEL ALBERTO', 'KILTAN GONZÁLEZ DIDIER EZEQUIEL', 'LÓPEZ ACUÑA MARCO EMILIO', 'LÓPEZ NOVOA EYDAN DAMIÁN', 'MÉNDEZ SUAZO FABIÁN FELIPE', 'MOYA REYES MATEO ANTONIO BENJAMÍN', 'OSES CAMPOS VALENTINA ABIGAIL', 'PALMA ORELLANA ANTONELLA FRANCISCA', 'PEREIRA ORELLANA MONSERRAT ALAMIRA', 'PÉREZ ORMAZÁBAL ZADKA ALEJANDRA', 'ROJAS GONZÁLEZ FLORENCIA TRINIDAD', 'ROJAS LEIVA EDUARDO JAVIER', 'VÁSQUEZ AGUILERA SCARLET NICOLE', 'YÁÑEZ GONZÁLEZ BRAYAN DAMIÁN', 'VARGAS MORAGA MARTINA SAYEN', 'SALAZAR SALAS PEDRO JOSÉ', 'VERA BRAVO FLORENCIA ANTONIA', 'PÉREZ QUEVEDO CONSTANZA TRINIDAD', 'SALGADO TOLEDO FRANCISCO JAVIER', 'RIQUELME SANTOS BENJAMÍN ALONSO'],
+            "Segundo Medio A": ['AHUMADA ROJAS TRINIDAD BELÉN', 'ESPINOSA TORRES FERNANDA ELENA', 'ESPINOZA PEÑALILLO BRAYAN JESÚS', 'GONZÁLEZ SALAZAR EMILIA CATALINA', 'MEDEL OJEDA LEÓN IGNACIO', 'MORALES REIMÁN ALFONSO TOMÁS', 'PEREIRA HORMAZÁBAL MAXIMILIANO EDUARDO', 'PINTO TOBAR JORDÁN AMARO', 'RECABAL YÁÑEZ KEVIN ANDRÉS', 'RIQUELME CASTILLO MATÍAS EDUARDO ANTONIO', 'RIVERA ABARZA CONSTANZA VICTORIA', 'SANTIS CASSEUS TEIVA SCARLETT', 'SOBARZO YÉVENES KATHERINNE ALEXIA BELÉN', 'TOLEDO ALBORNOZ ANTONELLA INES', 'VENEGAS ARRIAGADA ANTONIA EDITH', 'VIELMA ZABALAGA JOAN MANUEL', 'MEZA COLIMÁN ANGEL BLAS', 'PALMA ORELLANA ANTONELLA FRANCISCA'],
+            "Segundo Medio B": ['ARAYA DOMÍNGUEZ ALEX FABIÁN', 'BRAVO MENARES ALEX JOHAN', 'CARRASCO LEIVA BENJAMÍN IGNACIO', 'CARVAJAL URRUTIA CONSTANZA PRISILA (DANIEL)', 'ENCINA PIZARRO DIEGO BENJAMÍN ALEXANDER', 'FAÚNDEZ NORAMBUENA ALEJANDRO ANTONIO', 'JARAMILLO VILLAR EMILIO SCOTT', 'LÓPEZ VILLAR MARTÍN ALONSO', 'MIRANDA MUÑOZ ALEXANDRA JAVIERA', 'MUÑOZ TRONCOSO HÉCTOR ANTONIO', 'OLIVARES VALENZUELA ALONSO IGNACIO', 'OLIVARES VALENZUELA ANTONELLA DANAE IGNACIA', 'ORELLANA GARRIDO MATÍAS LEANDRO', 'PUNOY MEDEL MILLARAY ANGÉLICA', 'QUIÑENAO MUÑOZ CRISTÓBAL PATRICIO', 'RIQUELME COLOMA DALIA CONSTANZA', 'SALGADO ROJAS VICENTE MOISÉS', 'SANDOVAL CERPA VICENTE ESTEBAN', 'SOTO NARANJO CHRISTOPHER', 'VEKARIC VERDEJO MARTÍN'],
+            "Tercero Medio A": ['ALCÁNTAR GARCÍA MARTINA ALEJANDRA', 'BAHAMONDE MUÑOZ ARIEL LEON', 'CAMPOS MUÑOZ CRISTOPHER JESÚS', 'CANCINO ORÓSTICA VICENTE GASPAR', 'CARRASCO GONZÁLEZ CAMILA ANDREA', 'COFRÉ CASTILLO ANTONIO ANDRÉS', 'CONTRERAS VENEGAS BELÉN ALEJANDRA', 'GALDAMES VERGARA FELIPE ESTEBAN', 'GARCÍA GONZÁLEZ SANTIAGO HUMBERTO', 'GONZÁLEZ AMIGO FRANCISCA IGNACIA', 'GONZÁLEZ SALAZAR JOAQUÍN ALONSO', 'GUTIÉRREZ GUTIÉRREZ ANGEL MARTÍN', 'JARA SEPÚLVEDA KATRINA DARINKA', 'MARTÍNEZ LIZANA AARON ALEJANDRO', 'MEZA CARRASCO BENJAMÍN INTI', 'MIÑO GONZALEZ CATALINA ANDREA', 'MORAGA PACHECO RENATO IGNACIO', 'PÉREZ CORÓN MANUEL IGNACIO', 'SAMANIEGO CORTEZ JAKSON FERGIE', 'SEPÚLVEDA SALAZAR SOFÍA ANTONIA', 'TAPIA ACUÑA GABRIEL ANTONIO', 'VEGA VIVANCO CRISTÓBAL ANTONIO', 'VERA NAVARRETE DANIELA ELIZABETH', 'VILLALOBOS ARAVENA KARINA ANGELINA', 'VILLALOBOS VILLALOBOS SAMIR LUCIAN JESÚS', 'HERNÁNDEZ SEPÚLVEDA VICENTE ALEJANDRO', 'TORREALBA MOYA FLORVELIS DE LOS ANGELES', 'CARO URRUTIA CONSUELO ANTONIA', 'LOBOS CÁCERES ANTONIA PAZ'],
+            "Tercero Medio C": ['ARELLANO ACUÑA MARTÍN ANTONIO', 'AROS ÁVILA DAYANA IGNACIA', 'CABRERA COLOMBINO MARÍA GRACIA', 'FUENTES CARRASCO YARIXA ALEJANDRA', 'GÓMEZ CANCINO DANIELA ALEJANDRA', 'GUTIÉRREZ CARRIÓN MILLARAY CAROLINA', 'HONORATO TAPIA GLORIA JAVIERA', 'LARA RIVERA BENJAMÍN ESTEBAN', 'PALACIOS SOTO JOSÉ TOMÁS', 'PEZO SANTANDER JOSÉ CRISTÓBAL', 'ROCHA ROJAS JOSÉ PABLO WILLIAMS', 'ROJAS YÉVENES FABIANA ISIDORA', 'SÁNCHEZ PAREJA ANDY ANTONIO', 'SANTANDER LÓPEZ SIMÓN ESTEBAN', 'TRONCOSO LIZAMA SIOMARA IGNACIA', 'WARNKEN ROJAS LUCIANA BERNABELA', 'DE LA HOZ VALENZUELA FRANCO SEBASTIÁN', 'COLLAO MEDINA ANAÍS VALENTINA'],
+            "Cuarto Medio A": ['AGURTO CRESPO HOMERO ALEXANDER', 'ANDIA DE LA HOZ CATALINA BELEN', 'FUENTES GONZÁLEZ ESTEBAN ALEXANDER', 'GARCÍA ROJAS SOFÍA ELENA', 'GODOY HERRERA ANTONELLA CONSTANZA PAZ', 'GONZÁLEZ CASTRO KEVIN ALEJANDRO', 'MARCHANT MORÁN PÍA IGNACIA', 'QUINTANA SAN MARTÍN ALAN VICENTE', 'RECABAL YÁÑEZ CRISTOFER BASTIÁN', 'ROJAS GONZÁLEZ GABRIEL ANTONIO', 'TOLEDO MUÑOZ ESPERANZA BELÉN', 'YÁÑEZ GONZÁLEZ FRANCISCA ALEJANDRA'],
+            "Cuarto Medio C": ['Josefa Morales', 'Benjamín Pérez', 'Constanza Varela']
+        };
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAFp6biz1UTr9Ehaudkpe7QyTFVbdQz5Sc",
+            authDomain: "asistencia-mi-clase.firebaseapp.com",
+            projectId: "asistencia-mi-clase",
+            storageBucket: "asistencia-mi-clase.appspot.com",
+            messagingSenderId: "552398254230",
+            appId: "1:552398254230:web:c58dd07e5ceeb67e0912b7", 
+            measurementId: "G-MYR01HM1YE"
+        };
+
+        let app, db, auth;
+        let currentDateString = new Date().toISOString().slice(0, 10);
+        let masterData = {}; 
+        let currentYear = "2025"; 
+        let allClassesData = {}; 
+        let currentClass = null;
+        let students = [];
+        let currentStudentIndex = -1;
+        let userId = null;
+
+        const getEl = (id) => document.getElementById(id);
+        const elements = {
+            status: getEl('statusDisplay'), userId: getEl('userIdDisplay'), dateText: getEl('currentDate'),
+            tableContainer: getEl('studentsTableContainer'), loading: getEl('loadingIndicator'),
+            mainTable: getEl('mainTable'), tableHeader: getEl('tableHeader'), tableBody: getEl('tableBody'),
+            yearSel: getEl('yearSelector'), classSel: getEl('classSelector'), dateSel: getEl('dateSelector'),
+            nameInput: getEl('studentNameInput'), saveBtn: getEl('saveDataBtn'),
+            evalName: getEl('evalNameInput'),
+            reportBtns: { summary: getEl('showReportBtn'), detail: getEl('showDetailedReportBtn'), print: getEl('printReportBtn'), back: getEl('backToTableBtn') },
+            containers: { controls: getEl('controlsContainer'), reportNav: getEl('reportButtons'), backNav: getEl('backToTableContainer'), reportSummary: getEl('classReportContainer'), reportDetail: getEl('classDetailsContainer') },
+            modal: { el: getEl('observationModal'), title: getEl('modalTitle'), history: getEl('observationHistory'), input: getEl('newObservationText'), dateInput: getEl('obsDateInput'), save: getEl('saveObservationBtn'), close: getEl('closeObservationModalBtn') },
+            auth: { overlay: getEl('loginOverlay'), email: getEl('emailInput'), pass: getEl('passwordInput'), btnLogin: getEl('btnLogin'), btnReg: getEl('btnRegister'), err: getEl('authErrorMsg'), btnLogout: getEl('btnLogout') }
+        };
+
+        function getTeacherDocRef() { return doc(db, `registros_publicos/${userId}/coleccion_datos/datos_maestros`); }
+
+        async function initApp() {
+             try {
+                app = initializeApp(firebaseConfig); auth = getAuth(app); db = getFirestore(app);
+                const today = new Date();
+                const offset = today.getTimezoneOffset() * 60000;
+                currentDateString = new Date(today.getTime() - offset).toISOString().slice(0, 10);
+                elements.dateSel.value = currentDateString;
+                updateDateDisplay();
+                currentYear = "2025"; elements.yearSel.value = "2025";
+
+                onAuthStateChanged(auth, user => {
+                    if (user) { 
+                        userId = user.uid; elements.userId.textContent = `${user.email}`; elements.status.textContent = '● CONECTADO'; elements.auth.overlay.classList.add('hidden'); 
+                        loadData(); 
+                    } else { 
+                        elements.auth.overlay.classList.remove('hidden'); elements.userId.textContent = "Esperando acceso..."; elements.status.textContent = "● Desconectado";
+                    }
+                });
+                setupListeners();
+             } catch (e) { alert('Error de conexión: ' + e.message); }
+        }
+
+        async function handleLogin(e) { e.preventDefault(); elements.auth.err.classList.add('hidden'); try { await signInWithEmailAndPassword(auth, elements.auth.email.value, elements.auth.pass.value); } catch (error) { elements.auth.err.textContent = "Error: " + error.message; elements.auth.err.classList.remove('hidden'); } }
+        async function handleRegister() { if(!elements.auth.email.value) return alert("Falta correo"); try { await createUserWithEmailAndPassword(auth, elements.auth.email.value, elements.auth.pass.value); alert("Cuenta creada."); } catch (error) { alert("Error: " + error.message); } }
+        async function handleLogout() { if(confirm("¿Cerrar sesión?")) { await signOut(auth); location.reload(); } }
+
+        function loadData() {
+            onSnapshot(getTeacherDocRef(), (docSnap) => {
+                elements.loading.style.display = 'none';
+                let rawData = docSnap.exists() ? docSnap.data() : null;
+                if (!rawData || !rawData["2025"]) { masterData = { "2025": { classes: {} }, "2026": { classes: {} } }; if(rawData && rawData.classes) masterData["2025"].classes = rawData.classes; } else { masterData = rawData; }
+                
+                let modified = false;
+                ["2025", "2026"].forEach(year => {
+                    if(!masterData[year]) masterData[year] = { classes: {} };
+                    for (const [clsName, studentList] of Object.entries(BACKUP_DATA)) {
+                        if (!masterData[year].classes[clsName] || masterData[year].classes[clsName].length === 0) {
+                            masterData[year].classes[clsName] = studentList.map(name => ({ name: name, grades: [], attendance: {}, observations: [] }));
+                            modified = true;
+                        }
+                    }
+                });
+                if (modified) saveToCloud(true);
+                loadYearData(currentYear);
             });
         }
 
-        // --- ACCIONES ---
-        function changeYear() { currentYear = document.getElementById('yearSelector').value; renderApp(); }
-        function addStudent() { const n=prompt("Nombre:"); if(n) { masterData[currentYear].classes[currentClass].push({name:n, grades:[], observations:[]}); saveData(); }}
-        function delS(i) { if(confirm("¿Eliminar?")) { masterData[currentYear].classes[currentClass].splice(i,1); saveData(); }}
-        function addG(i) { const v=prompt("Nota:"); if(v) { const n=parseFloat(v.replace(',','.')); if(n>=1 && n<=7) { masterData[currentYear].classes[currentClass][i].grades.push(n); saveData(); }}}
-        function editG(si, gi) { const v=prompt("Editar (vacío para borrar):", masterData[currentYear].classes[currentClass][si].grades[gi]); if(v==="") masterData[currentYear].classes[currentClass][si].grades.splice(gi,1); else if(v) { const n=parseFloat(v.replace(',','.')); if(n>=1 && n<=7) masterData[currentYear].classes[currentClass][si].grades[gi]=n; } saveData(); }
+        function loadYearData(year) {
+            currentYear = year;
+            allClassesData = masterData[currentYear].classes || {};
+            const classList = Object.keys(allClassesData).sort();
+            if (!currentClass || !classList.includes(currentClass)) currentClass = classList[0] || null;
+            updateClassSelectorUI(classList, currentClass);
+            refreshTable();
+        }
 
-        // OBS
-        function openObs(i) {
-            currentStudentIdx = i;
-            const s = masterData[currentYear].classes[currentClass][i];
-            document.getElementById('modalStudentName').innerText = s.name;
-            document.getElementById('obsList').innerHTML = s.observations.length ? s.observations.map(o=>`<div class="bg-white p-3 rounded-lg border border-slate-100 text-sm mb-2"><div class="text-xs font-bold text-indigo-600">${o.date}</div>${o.text}</div>`).join('') : '<p class="text-center text-slate-400 text-xs italic">Sin registros</p>';
-            document.getElementById('obsModal').classList.remove('hidden');
+        function updateClassSelectorUI(classList, selectedClass) {
+            if (Array.from(elements.classSel.options).map(o => o.value).join(',') !== classList.join(',')) 
+                elements.classSel.innerHTML = classList.map(k => `<option value="${k}">${k}</option>`).join('');
+            elements.classSel.value = selectedClass || "";
         }
-        function saveObs() {
-            const t = document.getElementById('obsText').value;
-            if(t) { masterData[currentYear].classes[currentClass][currentStudentIdx].observations.push({text:t, date:new Date().toLocaleDateString()}); document.getElementById('obsText').value=''; document.getElementById('obsModal').classList.add('hidden'); saveData(); }
+
+        function getUniqueEvaluations(studentList) {
+            const evals = new Set();
+            studentList.forEach(s => s.grades.forEach(g => evals.add(g.type || "Evaluación")));
+            return Array.from(evals).sort(); 
         }
-        function closeModal() { document.getElementById('obsModal').classList.add('hidden'); }
+
+        function refreshTable() {
+            if(!currentClass) { elements.mainTable.classList.add('hidden'); return; }
+            students = allClassesData[currentClass] || [];
+            elements.mainTable.classList.remove('hidden');
+            
+            const evalColumns = getUniqueEvaluations(students);
+            
+            let headerHtml = `<tr>
+                <th class="p-3 text-left border w-48">Estudiante</th>
+                <th class="p-3 text-center border w-16">Prom</th>`;
+            
+            evalColumns.forEach(col => {
+                headerHtml += `<th class="p-3 text-center border min-w-[80px] bg-indigo-50 text-indigo-700">${col}</th>`;
+            });
+
+            headerHtml += `<th class="p-3 text-center border w-24">Asistencia</th>
+                           <th class="p-3 text-center border w-32">Acciones</th>
+                           </tr>`;
+            elements.tableHeader.innerHTML = headerHtml;
+
+            elements.tableBody.innerHTML = students.map((s, sIdx) => {
+                if(!s.grades) s.grades = []; if(!s.attendance) s.attendance = {}; if(!s.observations) s.observations = [];
+                const avg = calculateAverage(s.grades);
+                const att = s.attendance[currentDateString];
+                const hasObs = s.observations.length > 0;
+
+                const gradeCells = evalColumns.map(colName => {
+                    const gradeObj = s.grades.slice().reverse().find(g => (g.type || "Evaluación") === colName);
+                    
+                    if (gradeObj) {
+                        const realIndex = s.grades.indexOf(gradeObj); 
+                        return `
+                        <td class="border p-1 text-center bg-slate-50">
+                            <div class="flex items-center justify-center gap-1">
+                                <span class="font-bold text-slate-700">${gradeObj.value.toFixed(1)}</span>
+                                <button onclick="window.editGrade(${sIdx}, ${realIndex})" class="text-[10px] text-indigo-400 hover:text-indigo-700 p-1 bg-white border rounded shadow-sm" title="Editar nota">✏️</button>
+                            </div>
+                        </td>`;
+                    } else {
+                        return `<td class="border p-1 text-center empty-grade">-</td>`;
+                    }
+                }).join('');
+
+                return `
+                <tr class="hover:bg-slate-50 transition">
+                    <td class="border p-2 font-medium truncate max-w-[200px]" title="${s.name}">${s.name}</td>
+                    <td class="border p-2 text-center font-bold ${parseFloat(avg)<4 ? 'text-red-500':'text-slate-700'}">${avg}</td>
+                    ${gradeCells}
+                    <td class="border p-1 text-center">
+                        <div class="flex justify-center gap-1 scale-90">${renderAttBtn(sIdx,'P','bg-emerald-500',att)}${renderAttBtn(sIdx,'A','bg-rose-500',att)}${renderAttBtn(sIdx,'J','bg-amber-400',att)}</div>
+                    </td>
+                    <td class="border p-1">
+                         <div class="flex items-center justify-end gap-2 pr-2">
+                            <div class="flex items-center border border-slate-300 rounded overflow-hidden bg-white shadow-sm">
+                                <input type="number" id="grade-${sIdx}" step="0.1" placeholder="-" class="w-12 text-center text-xs outline-none p-1 font-bold text-slate-700">
+                                <button onclick="window.addGrade(${sIdx})" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-2 py-1 font-bold border-l border-slate-300 text-xs transition">+</button>
+                            </div>
+                            <button onclick="window.openModal(${sIdx})" class="w-7 h-7 rounded-full flex items-center justify-center transition ${hasObs?'bg-indigo-100 text-indigo-600 shadow-sm':'bg-slate-100 text-slate-400 hover:bg-slate-200'}">${hasObs?'📝':'💬'}</button>
+                            <button onclick="window.deleteStudent(${sIdx})" class="text-slate-300 hover:text-rose-500 transition">🗑️</button>
+                        </div>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        function renderAttBtn(idx, t, c, cur) { return `<button onclick="window.setAtt(${idx}, '${t}')" class="w-6 h-6 rounded-full text-[10px] font-bold transition-transform ${cur===t?`${c} text-white scale-110 shadow-md`:'bg-slate-100 text-slate-400 hover:bg-slate-200'}">${t}</button>`; }
+
+        window.setAtt = (idx, status) => { students[idx].attendance[currentDateString] = status; saveLocal(); };
+        
+        window.addGrade = (idx) => { 
+            const v = parseFloat(getEl(`grade-${idx}`).value); 
+            if(isNaN(v)||v<1||v>7) return alert('Nota inválida'); 
+            const evalType = elements.evalName.value.trim().toUpperCase() || "EVALUACIÓN GENERAL";
+            
+            const exists = students[idx].grades.find(g => (g.type || "Evaluación") === evalType);
+            if(exists) {
+                if(!confirm(`El estudiante ya tiene nota para "${evalType}" (${exists.value}). ¿Desea agregar otra igual?`)) return;
+            }
+
+            students[idx].grades.push({ value: v, date: currentDateString, type: evalType, id: Date.now() }); 
+            getEl(`grade-${idx}`).value=''; 
+            saveLocal(); 
+        };
+
+        window.editGrade = (sIdx, gIdx) => { 
+            const g = students[sIdx].grades[gIdx]; 
+            const currentType = g.type || "Evaluación";
+            const newVal = prompt(`Editar Nota: ${currentType}\nValor actual: ${g.value}\n\n- Escribe nuevo número para cambiar.\n- Escribe 'borrar' para eliminar.`, g.value);
+            
+            if(newVal === null) return; 
+            if(newVal.toLowerCase() === 'borrar') {
+                students[sIdx].grades.splice(gIdx, 1); 
+            } else {
+                const num = parseFloat(newVal);
+                if(!isNaN(num) && num >= 1 && num <= 7) {
+                    students[sIdx].grades[gIdx].value = num;
+                } else {
+                    alert("Valor inválido");
+                }
+            }
+            saveLocal(); 
+        };
+
+        window.deleteStudent = (idx) => { if(confirm('¿Eliminar estudiante?')) { students.splice(idx, 1); saveLocal(); } };
+        
+        window.openModal = (idx) => { 
+            currentStudentIndex = idx; 
+            elements.modal.el.classList.remove('hidden','flex'); 
+            elements.modal.el.classList.add('flex'); 
+            elements.modal.title.textContent=students[idx].name; 
+            elements.modal.dateInput.value = currentDateString; // Asignar fecha actual al input
+            renderHistory(students[idx].observations||[]); 
+        };
+
+        function saveLocal() { masterData[currentYear].classes[currentClass] = students; refreshTable(); }
+        async function saveToCloud(silent = false) { if(!auth.currentUser) return; try { await setDoc(getTeacherDocRef(), masterData); if(!silent) { const btn = elements.saveBtn; const orig = btn.innerHTML; btn.innerHTML = "✅ Guardado"; btn.classList.add('bg-emerald-600'); setTimeout(() => { btn.innerHTML = orig; btn.classList.remove('bg-emerald-600'); }, 2000); } } catch(e) { alert('Error: ' + e.message); } }
+        function calculateAverage(g) { if(!g.length) return '0.0'; return (g.reduce((a,b)=>a+b.value,0)/g.length).toFixed(1); }
+        function updateDateDisplay() { const d = new Date(currentDateString + 'T12:00:00'); elements.dateText.textContent = d.toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }); }
+        
+        // --- ORDENAR OBSERVACIONES POR FECHA ---
+        function renderHistory(l) { 
+            const s = [...l].sort((a,b) => new Date(b.date) - new Date(a.date) || b.id - a.id);
+            elements.modal.history.innerHTML = s.length?s.map(o=>`<div class="bg-white border-l-4 border-indigo-400 p-2 rounded shadow-sm text-xs"><div class="flex justify-between text-[10px] text-slate-400 mb-1"><span class="font-bold text-indigo-600 bg-indigo-50 px-1 rounded">${o.date}</span></div><p class="text-slate-700">${o.text}</p></div>`).join(''):'<p class="text-center text-slate-400 italic text-xs">Sin registros.</p>'; 
+        }
+
+        function setupListeners() {
+            elements.saveBtn.onclick = () => saveToCloud(false);
+            elements.yearSel.onchange = (e) => loadYearData(e.target.value);
+            elements.classSel.onchange = (e) => { currentClass = e.target.value; refreshTable(); };
+            elements.dateSel.onchange = (e) => { currentDateString = e.target.value; updateDateDisplay(); refreshTable(); };
+            getEl('addStudentBtn').onclick = () => { const n = elements.nameInput.value.trim().toUpperCase(); if(n&&currentClass&&!students.find(s=>s.name===n)) { students.push({ name: n, grades: [], attendance: {}, observations: [] }); elements.nameInput.value=''; saveLocal(); } };
+            elements.modal.close.onclick = () => elements.modal.el.classList.add('hidden');
+            
+            // --- GUARDAR OBSERVACIÓN CON FECHA SELECCIONADA ---
+            elements.modal.save.onclick = () => { 
+                const t = elements.modal.input.value.trim(); 
+                const d = elements.modal.dateInput.value;
+                if(t && d) { 
+                    students[currentStudentIndex].observations.push({ text: t, date: d, id: Date.now() }); 
+                    elements.modal.el.classList.add('hidden'); 
+                    elements.modal.input.value=''; 
+                    saveLocal(); 
+                } else if (!d) {
+                    alert("Por favor selecciona una fecha.");
+                }
+            };
+            
+            elements.reportBtns.back.onclick = () => { 
+                elements.tableContainer.classList.remove('hidden'); 
+                elements.containers.controls.classList.remove('hidden'); 
+                elements.containers.reportSummary.classList.add('hidden'); 
+                elements.containers.reportDetail.classList.add('hidden'); 
+                elements.containers.backNav.classList.add('hidden'); 
+                refreshTable(); 
+            };
+            
+            elements.reportBtns.print.onclick = () => window.print();
+            elements.reportBtns.summary.onclick = generateSummary;
+            elements.reportBtns.detail.onclick = generateDetail;
+            
+            elements.auth.btnLogin.onclick = handleLogin;
+            elements.auth.btnReg.onclick = handleRegister;
+            elements.auth.btnLogout.onclick = handleLogout;
+        }
+
+        function generateSummary() {
+            if(!allClassesData || Object.keys(allClassesData).length === 0) return alert("No hay datos cargados.");
+            elements.tableContainer.classList.add('hidden'); 
+            elements.containers.controls.classList.add('hidden');
+            elements.containers.backNav.classList.remove('hidden'); 
+            elements.containers.reportSummary.classList.remove('hidden');
+            elements.containers.reportDetail.classList.add('hidden'); 
+
+            const data = Object.keys(allClassesData).map(cls => { const list = allClassesData[cls]; let p=0, a=0, j=0, total=0; list.forEach(s => Object.values(s.attendance||{}).forEach(v => { if(v==='P')p++; if(v==='A')a++; if(v==='J')j++; total++; })); return { cls, count: list.length, p, a, j, rate: total ? ((p+j)/total*100).toFixed(1)+'%' : 'N/A' }; });
+            elements.containers.reportSummary.innerHTML = `<h2 class="text-xl font-bold text-slate-800 mb-4 text-center border-b pb-2">Resumen ${currentYear}</h2><table class="w-full text-sm text-left text-slate-600"><thead class="bg-slate-100 text-xs uppercase"><tr><th class="px-4 py-2">Clase</th><th class="px-4 py-2 text-center">Matrícula</th><th class="text-center px-4 py-2 text-emerald-600">Presentes</th><th class="text-center px-4 py-2 text-rose-600">Ausentes</th><th class="text-center px-4 py-2 text-amber-600">Justif.</th><th class="text-center px-4 py-2">% Asist.</th></tr></thead><tbody>${data.map(d=>`<tr class="border-b"><td class="px-4 py-3 font-medium">${d.cls}</td><td class="text-center">${d.count}</td><td class="text-center font-bold text-emerald-600">${d.p}</td><td class="text-center font-bold text-rose-600">${d.a}</td><td class="text-center font-bold text-amber-600">${d.j}</td><td class="text-center font-bold">${d.rate}</td></tr>`).join('')}</tbody></table>`;
+        }
+        
+        function generateDetail() {
+            if(!currentClass) return alert("Selecciona una clase primero.");
+            elements.tableContainer.classList.add('hidden'); 
+            elements.containers.controls.classList.add('hidden');
+            elements.containers.backNav.classList.remove('hidden'); 
+            elements.containers.reportDetail.classList.remove('hidden');
+            elements.containers.reportSummary.classList.add('hidden');
+
+            const list = allClassesData[currentClass]; 
+            const datesSet = new Set(); 
+            list.forEach(s => Object.keys(s.attendance||{}).forEach(d => datesSet.add(d))); 
+            const sortedDates = Array.from(datesSet).sort();
+
+            const evalColumns = getUniqueEvaluations(list);
+
+            elements.containers.reportDetail.innerHTML = `
+            <h2 class="text-xl font-bold text-slate-800 mb-4 text-center border-b pb-2">Detalle: ${currentClass} (${currentYear})</h2>
+            <table class="w-full text-xs text-slate-600 border border-slate-200">
+                <thead class="bg-slate-100 uppercase">
+                    <tr>
+                        <th class="px-2 py-2 text-left border w-48">Estudiante</th>
+                        <th class="px-1 py-2 text-center border w-12 bg-slate-200">Prom</th>
+                        ${evalColumns.map(e => `<th class="px-1 py-2 text-center border bg-indigo-50 text-indigo-800 w-16">${e}</th>`).join('')}
+                        ${sortedDates.map(d=>`<th class="px-1 py-2 text-center border w-10">${d.slice(5)}</th>`).join('')}
+                        <th class="px-2 py-2 text-left border w-48">Observaciones</th> </tr>
+                </thead>
+                <tbody>
+                    ${list.map((s,i)=>{ 
+                        const gradeCells = evalColumns.map(col => {
+                            const g = s.grades.slice().reverse().find(gr => (gr.type || "Evaluación") === col);
+                            return `<td class="text-center border font-bold ${g ? 'text-slate-700' : 'text-slate-200'}">${g ? g.value.toFixed(1) : '-'}</td>`;
+                        }).join('');
+
+                        const attCells = sortedDates.map(d=>{ 
+                            const v=s.attendance[d]||'-'; 
+                            let c='text-slate-300'; 
+                            if(v==='P')c='bg-emerald-100 text-emerald-700 font-bold'; 
+                            if(v==='A')c='bg-rose-100 text-rose-700 font-bold'; 
+                            if(v==='J')c='bg-amber-100 text-amber-700 font-bold'; 
+                            return `<td class="text-center border ${c}">${v}</td>`; 
+                        }).join(''); 
+
+                        // --- RENDERIZADO DE OBSERVACIONES EN EL REPORTE ---
+                        const obsHtml = s.observations
+                            .sort((a,b) => new Date(b.date) - new Date(a.date)) // Ordenar por fecha
+                            .map(o=>`<div class="mb-1 border-b border-slate-100 pb-1 last:border-0"><strong class="text-indigo-600 text-[10px]">${o.date}:</strong> ${o.text}</div>`)
+                            .join('');
+
+                        return `<tr class="${i%2===0?'bg-white':'bg-slate-50'}"><td class="px-2 py-2 border font-medium truncate max-w-[150px]">${s.name}</td><td class="px-1 py-2 border text-center font-bold bg-slate-50 text-black">${calculateAverage(s.grades)}</td>${gradeCells}${attCells}<td class="px-2 py-2 border leading-tight text-[10px]">${obsHtml}</td></tr>`; 
+                    }).join('')}
+                </tbody>
+            </table>`;
+        }
+
+        window.onload = initApp;
     </script>
 </body>
 </html>
