@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Planificador Digital (Export Word)</title>
+    <title>Planificador Digital (Alertas UTP)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -21,6 +21,12 @@
         .label-detail { display: block; font-size: 0.75rem; font-weight: 700; color: #4b5563; margin-bottom: 0.25rem; text-transform: uppercase; }
         select optgroup { font-weight: bold; font-style: normal; color: #4b5563; }
         
+        /* ESTILOS DE ALERTAS (NUEVO) */
+        .alert-box { padding: 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1rem; animation: slideIn 0.5s ease-out; border-left: 5px solid; }
+        .alert-error { background-color: #fef2f2; border-color: #ef4444; color: #b91c1c; }
+        .alert-success { background-color: #f0fdf4; border-color: #22c55e; color: #15803d; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
         @media print {
             @page { size: landscape; margin: 1cm; }
             body { background: white; padding: 0; font-family: Arial, sans-serif; }
@@ -65,6 +71,9 @@
             const [editingMonth, setEditingMonth] = useState(null);
             const [currentPlanId, setCurrentPlanId] = useState(null);
             const [planStatus, setPlanStatus] = useState('Borrador');
+            
+            // ESTADO NUEVO PARA ALERTAS
+            const [alertInfo, setAlertInfo] = useState(null);
 
             const MONTHS = ["MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
             const YEAR_KEY = config.year === '2025' ? 'plan' : `plan_${config.year}`;
@@ -108,6 +117,8 @@
                 }
 
                 setLoading(true);
+                setAlertInfo(null); // Limpiar alertas previas
+
                 try {
                     const q = dbPlanif.collection(COLL_PLANIFICACIONES).where("docente", "==", config.docente).where("nivel", "==", config.nivel).where("asignatura", "==", config.asignatura).where("year", "==", config.year).limit(1);
                     const querySnapshot = await q.get();
@@ -117,8 +128,20 @@
                         setCurrentPlanId(docRecuperado.id);
                         if(datosGuardados.monthly_distribution) setMonthlyDist(datosGuardados.monthly_distribution);
                         if(datosGuardados.detailed_planning) setClassPlans(datosGuardados.detailed_planning);
-                        setPlanStatus(datosGuardados.estado || 'Borrador');
-                        alert(`📂 ¡Avance Recuperado!`);
+                        
+                        const estadoActual = datosGuardados.estado || 'Borrador';
+                        setPlanStatus(estadoActual);
+
+                        // --- LÓGICA DE NOTIFICACIÓN ---
+                        if (estadoActual === 'Rechazado') {
+                            setAlertInfo({ type: 'error', msg: '🔴 UTP ha RECHAZADO esta planificación. Por favor revisa y corrige.' });
+                        } else if (estadoActual === 'Aprobado') {
+                            setAlertInfo({ type: 'success', msg: '✅ ¡Excelente! Tu planificación ha sido APROBADA por UTP.' });
+                        } else {
+                            // Mensaje normal si no hay alerta crítica
+                            alert(`📂 ¡Avance Recuperado! Estado: ${estadoActual}`);
+                        }
+
                     } else {
                         setCurrentPlanId(null);
                         setClassPlans({});
@@ -162,11 +185,17 @@
                     if (currentPlanId) { await dbPlanif.collection(COLL_PLANIFICACIONES).doc(currentPlanId).update(dataToSave); } 
                     else { const docRef = await dbPlanif.collection(COLL_PLANIFICACIONES).add(dataToSave); setCurrentPlanId(docRef.id); }
                     setPlanStatus(estadoFinal);
-                    alert(esEnvioUTP ? "🚀 ¡Enviado a UTP!" : "💾 Guardado");
+                    
+                    if(esEnvioUTP) {
+                        alert("🚀 ¡Enviado a UTP!");
+                        setAlertInfo(null); // Limpiar alerta si existía
+                        setStep(1); // Volver al panel para ver el nuevo estado
+                    } else {
+                        alert("💾 Guardado");
+                    }
                 } catch(e) { alert("Error: " + e.message); }
             };
 
-            // FUNCIONALIDAD EXPORTAR A WORD
             const downloadWord = () => {
                 const monthClasses = classPlans[editingMonth] || [];
                 if(monthClasses.length === 0) return alert("No hay clases para descargar.");
@@ -258,9 +287,24 @@
             );
 
             if (step === 1) return React.createElement("div", { className: "max-w-6xl mx-auto mt-6 no-print" },
+                // --- AQUÍ APARECE LA ALERTA ---
+                alertInfo && React.createElement("div", { className: `alert-box ${alertInfo.type === 'error' ? 'alert-error' : 'alert-success'}` },
+                    React.createElement("i", { className: `fas ${alertInfo.type === 'error' ? 'fa-exclamation-circle' : 'fa-check-circle'} text-2xl` }),
+                    React.createElement("div", null, 
+                        React.createElement("h3", { className: "font-bold" }, alertInfo.type === 'error' ? 'ATENCIÓN' : 'APROBADO'), 
+                        React.createElement("p", { className: "text-sm" }, alertInfo.msg)
+                    )
+                ),
+
                 React.createElement("div", { className: "glass p-6 rounded-2xl shadow-lg" },
                     React.createElement("div", { className: "flex justify-between items-center mb-6 border-b pb-4" },
-                        React.createElement("div", null, React.createElement("h2", { className: "text-xl font-bold text-gray-800" }, "Panel Mensual"), React.createElement("p", {className: "text-sm text-gray-500"}, `${config.nivel} - ${config.asignatura}`)),
+                        React.createElement("div", null, 
+                            React.createElement("h2", { className: "text-xl font-bold text-gray-800" }, "Panel Mensual"), 
+                            React.createElement("div", { className: "flex items-center gap-2" },
+                                React.createElement("p", {className: "text-sm text-gray-500"}, `${config.nivel} - ${config.asignatura}`),
+                                React.createElement("span", { className: "px-2 py-0.5 bg-gray-100 rounded text-xs font-bold border" }, `Estado: ${planStatus}`)
+                            )
+                        ),
                         React.createElement("button", { onClick: () => { setStep(0); setClassPlans({}); setCurrentPlanId(null); }, className: "px-4 py-2 text-gray-500 font-bold hover:bg-gray-100 rounded" }, "Salir")
                     ),
                     React.createElement("div", { className: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" },
