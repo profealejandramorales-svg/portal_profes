@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ProfeAle - Ruleta 2026</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        :root { --primary: #4F46E5; --bg: #F3F4F6; --text: #1F2937; }
+        body { 
+            font-family: 'Segoe UI', system-ui, sans-serif; 
+            background: var(--bg); 
+            color: var(--text); 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            min-height: 100vh; 
+            padding: 20px; 
+            margin: 0; 
+        }
+        
+        h1 { 
+            color: var(--primary); 
+            text-transform: uppercase; 
+            letter-spacing: 2px;
+            margin: 10px 0 20px 0; 
+            font-size: 2rem;
+            text-align: center;
+            text-shadow: 2px 2px 0px rgba(0,0,0,0.1);
+        }
+
+        .main-layout { 
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 40px; 
+            max-width: 1200px; 
+            justify-content: center; 
+            width: 100%; 
+            align-items: flex-start;
+        }
+        
+        /* --- PANELES --- */
+        .control-panel { 
+            background: white; 
+            padding: 25px; 
+            border-radius: 20px; 
+            width: 350px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 15px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1); 
+            height: fit-content; 
+        }
+
+        .wheel-section { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: flex-start;
+            width: 100%;
+            max-width: 450px; 
+        }
+        
+        /* --- ESTILOS GENERALES --- */
+        .course-manager { background-color: #EEF2FF; padding: 15px; border-radius: 12px; border: 1px solid #C7D2FE; margin-bottom: 10px; }
+        
+        label { font-weight: bold; font-size: 0.9rem; color: #4B5563; display: block; margin-bottom: 5px; }
+        
+        select, input[type="text"] { width: 100%; padding: 12px; border: 1px solid #D1D5DB; border-radius: 8px; box-sizing: border-box; font-size: 1rem; outline: none; }
+        select:focus, input:focus { border-color: var(--primary); }
+
+        .input-group { display: flex; gap: 8px; margin-top: 8px; }
+        
+        button { padding: 10px 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; color: white; background: var(--primary); transition: transform 0.1s; }
+        button:active { transform: scale(0.98); }
+        button:disabled { background: #9CA3AF; cursor: not-allowed; }
+        
+        .btn-danger { background: #EF4444; font-size: 0.8rem; padding: 5px 10px; }
+        .btn-add { background: #10B981; font-size: 1.2rem; line-height: 1; padding: 0 15px; }
+        #btnForceLoad { background: #F59E0B; margin-top: 5px; width: 100%; color: #1F2937; font-size: 0.85rem; }
+
+        textarea { width: 100%; height: 120px; padding: 12px; border: 2px solid #E5E7EB; border-radius: 10px; box-sizing: border-box; resize: vertical; font-family: inherit; font-size: 0.9rem; }
+
+        /* --- BOTÓN GIRAR (EL PROTAGONISTA) --- */
+        #spinBtn { 
+            font-size: 1.5rem; 
+            width: 80%; 
+            padding: 15px; 
+            border-radius: 50px; 
+            margin-top: 20px; 
+            box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4); 
+            background: linear-gradient(135deg, #4F46E5 0%, #3730A3 100%);
+            border: 2px solid white;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* --- INTERRUPTOR --- */
+        .toggle-container {
+            display: flex; align-items: center; justify-content: space-between;
+            background: #F9FAFB; padding: 10px; border-radius: 8px; border: 1px solid #E5E7EB; cursor: pointer;
+        }
+        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--primary); }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        /* --- HISTORIAL --- */
+        .history-box { margin-top: 15px; padding-top: 10px; border-top: 1px solid #E5E7EB; display: none; }
+        .history-title { font-size: 0.8rem; color: #9CA3AF; text-transform: uppercase; font-weight: bold; }
+        .history-item { font-size: 0.9rem; color: #9CA3AF; text-decoration: line-through; margin-bottom: 2px; }
+
+        /* --- RULETA --- */
+        .wheel-container { position: relative; width: 100%; max-width: 450px; aspect-ratio: 1/1; display: flex; justify-content: center; align-items: center; }
+        #wheelCanvas { width: 100%; height: 100%; transition: transform 4s cubic-bezier(0.15, 0.85, 0.15, 1); border-radius: 50%; filter: drop-shadow(0 15px 25px rgba(0,0,0,0.15)); }
+        .pointer { position: absolute; top: -5%; width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent; border-top: 40px solid #1F2937; z-index: 10; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); }
+        
+        #winnerAnnouncement { 
+            font-size: 2.5rem; 
+            font-weight: 900; 
+            color: var(--primary); 
+            text-align: center; 
+            min-height: 3.5rem; 
+            text-shadow: 0 2px 10px rgba(79,70,229,0.2); 
+            line-height: 1.2;
+            padding: 10px;
+            margin-top: 20px;
+        }
+
+        .status-indicator { font-size: 0.8rem; text-align: right; color: #6B7280; margin-bottom: 5px; display: flex; align-items: center; justify-content: flex-end; gap: 5px; }
+        .footer { margin-top: 30px; padding: 20px; color: #9CA3AF; font-size: 0.9rem; text-align: center; width: 100%; }
+
+        /* --- MODO MÓVIL --- */
+        @media (max-width: 900px) {
+            h1 { font-size: 1.5rem; margin-bottom: 10px; }
+            .main-layout { flex-direction: column; align-items: center; gap: 20px; }
+            .wheel-section { order: 1; width: 100%; }
+            .control-panel { order: 2; width: 100%; max-width: 350px; }
+            .pointer { border-left-width: 15px; border-right-width: 15px; border-top-width: 30px; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>✨ Hoy estás de Suerte ✨</h1>
+
+    <div class="main-layout">
+        
+        <div class="control-panel">
+            <div class="status-indicator" id="statusMsg">🔴 Conectando...</div>
+
+            <div class="course-manager">
+                <label>Seleccionar Curso:</label>
+                <select id="courseSelect"></select>
+                
+                <div class="input-group">
+                    <input type="text" id="newCourseName" placeholder="Nuevo curso (ej: 4 Medio)">
+                    <button id="btnCreateCourse">Crear</button>
+                </div>
+                <div style="margin-top:8px; text-align:right;">
+                     <button class="btn-danger" id="btnDeleteCourse">Eliminar Curso</button>
+                </div>
+            </div>
+
+            <button id="btnForceLoad">⚠️ Restaurar Nómina 2026</button>
+
+            <label class="toggle-container">
+                <span>🚫 Quitar al seleccionado</span>
+                <div class="switch">
+                    <input type="checkbox" id="removeWinnerSwitch" checked>
+                    <span class="slider"></span>
+                </div>
+            </label>
+
+            <div>
+                <label>Agregar Alumno:</label>
+                <div class="input-group">
+                    <input type="text" id="newStudentName" placeholder="Nombre y Apellido">
+                    <button id="btnAddStudent" class="btn-add">＋</button>
+                </div>
+            </div>
+
+            <label>Participantes:</label>
+            <textarea id="studentList"></textarea>
+
+            <div id="historyBox" class="history-box">
+                <div class="history-title">Ya participaron:</div>
+                <div id="historyList"></div>
+            </div>
+        </div>
+
+        <div class="wheel-section">
+            <div class="wheel-container">
+                <div class="pointer"></div>
+                <canvas id="wheelCanvas" width="450" height="450"></canvas>
+            </div>
+            
+            <button id="spinBtn">¡GIRAR RULETA!</button>
+
+            <div id="winnerAnnouncement"></div>
+        </div>
+
+    </div>
+
+    <div class="footer">Desarrollado por <strong>ProfeAle</strong></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteField, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDUArOBUzzvulHYQGA7IvnEwo2jQbEa3Xs",
+            authDomain: "attendance-ai-s81lt.firebaseapp.com",
+            projectId: "attendance-ai-s81lt",
+            storageBucket: "attendance-ai-s81lt.firebasestorage.app",
+            messagingSenderId: "935781953186",
+            appId: "1:935781953186:web:6c8a7a93ffad180d33b1fb"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const docRef = doc(db, "colegio", "escuela_data");
+
+        // DATOS NÓMINA 2026 [ACTUALIZADA CON CSV]
+        const nominaInicial2026 = {
+    "1A": "ÁLVAREZ FAÚNDEZ MATEO VICENTE\nCASTILLO ARAVENA MAITE PASCAL\nCOLLADO PUENTES SANTINO ALEXANDER\nCONCHA TORREALBA  JOAQUÍN IGNACIO\nDÍAZ MALUENDA ESTEFANÍA ANTONIA\nDONAIRE ROJAS MAITE EMILIA ESTER\nESPINOZA CACHAÑA LISBET ALEXANDRA\nFERRADA ALBORNOZ AGUSTÍN ALEXIS\nFUENTEMAVIDA BARROS OSCAR ANTONIO\nJAQUE PACHECO DAMIÁN IGNACIO\nJARAMILLO VILLAR MATT HOST\nLÓPEZ ACUÑA MARCO EMILIO\nLÓPEZ VILLAR FRANCO IGNACIO\nMESA DÍAZ GONZALO IGNACIO\nMEZA CARRASCO CRISTIAN ALFONSO\nMORALES GARRIDO NICOLÁS ANTONIO\nORTEGA DA SILVA EMILIA CATALINA SOPHIA\nPEREIRA TAPIA KEVIN RUBÉN\nRAMÍREZ SEPÚLVEDA LUIS JUSTIN JESÚS\nRAMÍREZ VALDÉS MARTINA POLETTE\nRECABAL YÁÑEZ TOMÁS IGNACIO\nRODRÍGUEZ  SEPÚLVEDA SIMONEY ISAMAR\nROJAS ÓRDENES TRACY MAIDEN\nSÁNCHEZ MUNIZAGA ALONDRA ANAÍS\nSOLIZ OLGUIN BRAYAN\nVALENZUELA  MUÑOZ MAGDALENA  BELÉN",
+    "2A": "ALBURQUENQUE DEL GRECCO EMILYA ANTONIA\nANABALÓN BELTRÁN BENJAMÍN NICOLÁS\nARAVENA ZÚÑIGA NOEMÍ JESÚS DE LAS ESTRELLAS\nARAYA DOMÍNGUEZ ALEX FABIÁN\nASTUDILLO CAMPOS CRISTÓBAL ANTONIO\nASTUDILLO VÁSQUEZ BRUNO FERNANDO LEÓN\nBAEZ DONOSO LUKAS ALFONSO\nCARO BUSTOS KRISCHNA ESTEFANIA\nCONTRERAS  SALGADO HADEEY ALEJANDRA\nCUMINAO VIDAL CATALINA ANDREA\nDÍAZ MALUENDA MIGUEL ALBERTO\nIBÁÑEZ GONZÁLEZ FERNANDA MAGDALENA\nKILTAN GONZÁLEZ DIDIER EZEQUIEL\nLAGOS LASTRA ALEXANDRA  DANAE\nLÓPEZ LÓPEZ LUCIANO ANTONIO\nLÓPEZ NOVOA EYDAN DAMIÁN\nMALDONADO  FLORES ANTONELLA  BELÉN\nMONTECINO  DÍAZ VALESKA BELÉN\nMOYA REYES MATEO ANTONIO BENJAMÍN\nMUÑOZ CONTRERAS  LUIS GABRIEL\nMUÑOZ LUNA ROGER JOEL\nNAVARRO VILLANUEVA  KARLA PAZ\nORELLANA ARRIAGADA  SEBASTIÁN ANDRÉS\nOSES CAMPOS VALENTINA ABIGAIL\nPALMA ORELLANA ANTONELLA  FRANCISCA\nPEREIRA ORELLANA MONSERRAT  ALAMIRA\nPÉREZ ORMAZÁBAL  ZADKA ALEJANDRA\nPÉREZ QUEVEDO CONSTANZA  TRINIDAD\nQUEZADA NARANJO FELIPE ALONSO\nRAMÍREZ VILLALOBOS  DUVAN EMILIO\nRIQUELME SANTOS BENJAMÍN ALONSO\nROJAS GONZÁLEZ FLORENCIA TRINIDAD\nROJAS LEIVA EDUARDO JAVIER\nSALAZAR SALAS PEDRO JOSÉ\nSANTANDER  LÓPEZ MARÍA JOSÉ\nTAPIA CASTILLA JEANFRANCO  PATRICK\nURBINA CÁCERES FRANCHESCA  POULETTE\nVARGAS MORAGA MARTINA SAYEN\nVÁSQUEZ AGUILERA SCARLET NICOLE\nVÁSQUEZ ZALDUENDO  AMANDA ISABEL\nVERA BRAVO FLORENCIA ANTONIA\nYÁÑEZ GONZÁLEZ BRAYAN DAMIÁN\nZABALAGA COFRÉ DAMIÁN ANDRÉS",
+    "3A": "AHUMADA ROJAS TRINIDAD BELÉN\nCORNEJO CASTILLO OSCAR GABRIEL\nESPINOZA PEÑALILLO BRAYAN JESÚS\nFAÚNDEZ NORAMBUENA ALEJANDRO  ANTONIO\nJARAMILLO VILLAR EMILIO SCOTT\nLÓPEZ VILLAR MARTÍN ALONSO\nMEZA COLIMÁN ANGEL BLAS\nMIRANDA MUÑOZ ALEXANDRA  JAVIERA\nMORAGA PACHECO RENATO IGNACIO\nMORALES REIMÁN ALFONSO TOMÁS\nORELLANA GARRIDO MATÍAS LEANDRO\nPEREIRA HORMAZÁBAL MAXIMILIANO EDUARDO\nPINTO TOBAR JORDÁN AMARO\nRECABAL YÁÑEZ KEVIN ANDRÉS\nSANDOVAL CERPA VICENTE ESTEBAN\nSOTO NARANJO CHRISTOPHER\nVEKARIC VERDEJO MARTÍN\nVIELMA ZABALAGA JOAN MANUEL",
+    "3C": "BRAVO MENARES ALEX JOHAN\nCARRASCO LEIVA BENJAMÍN IGNACIO\nENCINA PIZARRO DIEGO BENJAMÍN ALEXANDER\nESPINOSA TORRES FERNANDA ELENA\nGONZÁLEZ SALAZAR EMILIA CATALINA\nMEDEL OJEDA LEÓN IGNACIO\nOLIVARES VALENZUELA  ALONSO IGNACIO\nOLIVARES VALENZUELA  ANTONELLA  DANAE IGNACIA\nPUNOY MEDEL MILLARAY ANGÉLICA\nQUIÑENAO MUÑOZ CRISTÓBAL PATRICIO\nRIQUELME CASTILLO MATÍAS EDUARDO ANTONIO\nRIQUELME COLOMA DALIA CONSTANZA\nRIVERA ABARZA CONSTANZA  VICTORIA\nSAAVEDRA BRAVO FLORENCIA ALEJANDRA\nSALGADO ROJAS VICENTE MOISÉS\nSANTIS CASSEUS TEIVA SCARLETT\nSOBARZO YÉVENES KATHERINNE  ALEXIA BELÉN\nTOLEDO ALBORNOZ ANTONELLA  INES\nVENEGAS ARRIAGADA  ANTONIA EDITH",
+    "4A": "ALCÁNTAR GARCÍA MARTINA ALEJANDRA\nBAHAMONDE  MUÑOZ ARIEL LEON\nCAMPOS MUÑOZ CRISTOPHER  JESÚS\nCANCINO ORÓSTICA VICENTE GASPAR\nCARO URRUTIA CONSUELO ANTONIA\nCARRASCO GONZÁLEZ CAMILA ANDREA\nCOFRÉ CASTILLO ANTONIO ANDRÉS\nGALDAMES VERGARA FELIPE ESTEBAN\nGARCÍA GONZÁLEZ SANTIAGO HUMBERTO\nGONZÁLEZ AMIGO FRANCISCA IGNACIA\nGONZÁLEZ SALAZAR JOAQUÍN ALONSO\nGUTIÉRREZ GUTIÉRREZ ANGEL MARTÍN\nHERNÁNDEZ SEPÚLVEDA VICENTE ALEJANDRO\nLOBOS CÁCERES ANTONIA PAZ\nMARTÍNEZ LIZANA AARON ALEJANDRO\nMEZA CARRASCO BENJAMÍN INTI\nMIÑO GONZALEZ CATALINA ANDREA\nPÉREZ CORÓN MANUEL IGNACIO\nSAMANIEGO  CORTEZ JAKSON FERGIE\nSEPÚLVEDA SALAZAR SOFÍA ANTONIA\nTAPIA ACUÑA GABRIEL ANTONIO\nTORREALBA  MOYA FLORVELIS DE LOS ANGELES\nVEGA VIVANCO CRISTÓBAL ANTONIO\nVERA NAVARRETE  DANIELA ELIZABETH\nVILLALOBOS  ARAVENA KARINA ANGELINA\nVILLALOBOS  VILLALOBOS  SAMIR LUCIAN JESÚS",
+    "4C": "ARELLANO ACUÑA MARTÍN ANTONIO\nAROS ÁVILA DAYANA IGNACIA\nCABRERA COLOMBINO  MARÍA GRACIA\nCOLLAO MEDINA ANAÍS VALENTINA\nDE LA HOZ VALENZUELA  FRANCO SEBASTIÁN\nFUENTES CARRASCO YARIXA ALEJANDRA\nGÓMEZ CANCINO DANIELA ALEJANDRA\nGUTIÉRREZ CARRIÓN MILLARAY CAROLINA\nHONORATO TAPIA GLORIA JAVIERA\nLARA RIVERA BENJAMÍN ESTEBAN\nPALACIOS SOTO JOSÉ TOMÁS\nPEZO SANTANDER  JOSÉ CRISTÓBAL\nROCHA ROJAS JOSÉ PABLO WILLIAMS\nROJAS YÉVENES FABIANA ISIDORA\nSÁNCHEZ PAREJA ANDY ANTONIO\nSANTANDER  LÓPEZ SIMÓN ESTEBAN\nTRONCOSO LIZAMA SIOMARA IGNACIA\nWARNKEN ROJAS LUCIANA BERNABELA"
+};
+
+        let allCourses = {}; 
+        let currentCourseKey = "";
+        let isSpinning = false;
+        let currentRotation = 0;
+        const colors = ['#F87171', '#60A5FA', '#34D399', '#FBBF24', '#A78BFA', '#F472B6', '#22D3EE'];
+
+        const ui = {
+            select: document.getElementById('courseSelect'),
+            inputCourse: document.getElementById('newCourseName'),
+            inputStudent: document.getElementById('newStudentName'),
+            textarea: document.getElementById('studentList'),
+            btnCreate: document.getElementById('btnCreateCourse'),
+            btnDelete: document.getElementById('btnDeleteCourse'),
+            btnAddStudent: document.getElementById('btnAddStudent'),
+            btnForceLoad: document.getElementById('btnForceLoad'),
+            btnSpin: document.getElementById('spinBtn'),
+            removeSwitch: document.getElementById('removeWinnerSwitch'),
+            historyBox: document.getElementById('historyBox'),
+            historyList: document.getElementById('historyList'),
+            status: document.getElementById('statusMsg'),
+            winner: document.getElementById('winnerAnnouncement'),
+            canvas: document.getElementById('wheelCanvas'),
+            ctx: document.getElementById('wheelCanvas').getContext('2d'),
+            wheelSection: document.querySelector('.wheel-section')
+        };
+
+        // CONEXIÓN
+        onSnapshot(docRef, (docSnap) => {
+            if (docSnap.exists()) {
+                allCourses = docSnap.data();
+                ui.status.innerHTML = "🟢 <span style='color:green'>En línea</span>";
+                refreshCourseSelect();
+                
+                if (currentCourseKey && allCourses[currentCourseKey] !== undefined) {
+                    if (document.activeElement !== ui.textarea) {
+                        ui.textarea.value = allCourses[currentCourseKey];
+                        drawWheel();
+                    }
+                } else if (!currentCourseKey && Object.keys(allCourses).length > 0) {
+                    ui.select.selectedIndex = 0;
+                    changeCourse();
+                }
+            } else {
+                ui.status.innerText = "⚪ Sin datos (Usa el botón amarillo)";
+            }
+        });
+
+        function refreshCourseSelect() {
+            const prevSelection = ui.select.value;
+            ui.select.innerHTML = "";
+            const courses = Object.keys(allCourses).sort();
+            
+            if(courses.length === 0) {
+                let opt = document.createElement('option');
+                opt.text = "--- Vacío ---";
+                ui.select.add(opt);
+                return;
+            }
+            courses.forEach(c => {
+                let opt = document.createElement('option');
+                opt.value = c;
+                opt.innerText = c;
+                ui.select.appendChild(opt);
+            });
+            if (courses.includes(prevSelection)) ui.select.value = prevSelection;
+        }
+
+        function changeCourse() {
+            currentCourseKey = ui.select.value;
+            ui.historyList.innerHTML = "";
+            ui.historyBox.style.display = "none";
+            
+            if(allCourses[currentCourseKey]) {
+                ui.textarea.value = allCourses[currentCourseKey];
+                drawWheel();
+            }
+        }
+
+        async function saveToCloud() {
+            if (!currentCourseKey) return;
+            ui.status.innerText = "Guardando...";
+            try {
+                await updateDoc(docRef, { [currentCourseKey]: ui.textarea.value });
+            } catch (e) { console.error(e); }
+        }
+
+        // EVENTOS
+        ui.select.addEventListener('change', changeCourse);
+        ui.textarea.addEventListener('input', () => drawWheel());
+        ui.textarea.addEventListener('blur', saveToCloud);
+
+        ui.btnCreate.addEventListener('click', async () => {
+            const name = ui.inputCourse.value.trim().toUpperCase();
+            if (!name) return alert("Falta nombre");
+            if (allCourses[name]) return alert("Ya existe");
+            await updateDoc(docRef, { [name]: "" });
+            ui.inputCourse.value = "";
+            currentCourseKey = name;
+        });
+
+        ui.btnDelete.addEventListener('click', async () => {
+            if(!currentCourseKey) return;
+            if(confirm("¿Eliminar curso permanentemente?")) {
+                await updateDoc(docRef, { [currentCourseKey]: deleteField() });
+            }
+        });
+
+        ui.btnForceLoad.addEventListener('click', async () => {
+            if(confirm("¿Restaurar nómina 2026 completa?")) {
+                ui.btnForceLoad.innerText = "Subiendo...";
+                await setDoc(docRef, nominaInicial2026);
+                alert("✅ ¡Cursos 2026 cargados!");
+                ui.btnForceLoad.innerText = "⚠️ Restaurar Nómina 2026";
+            }
+        });
+
+        ui.btnAddStudent.addEventListener('click', () => {
+            const name = ui.inputStudent.value.trim().toUpperCase();
+            if (!name) return;
+            const current = ui.textarea.value.trim();
+            ui.textarea.value = current ? current + "\n" + name : name;
+            ui.inputStudent.value = "";
+            drawWheel();
+            saveToCloud();
+        });
+
+        // RULETA
+        ui.btnSpin.addEventListener('click', spin);
+
+        function drawWheel() {
+            const participants = ui.textarea.value.split('\n').map(s => s.trim()).filter(s => s !== "");
+            const centerX = ui.canvas.width / 2;
+            const centerY = ui.canvas.height / 2;
+            const radius = ui.canvas.width / 2 - 20;
+            
+            ui.ctx.clearRect(0, 0, ui.canvas.width, ui.canvas.height);
+
+            if (participants.length === 0) {
+                ui.ctx.beginPath(); ui.ctx.arc(centerX, centerY, radius, 0, 2*Math.PI);
+                ui.ctx.fillStyle = "#E5E7EB"; ui.ctx.fill();
+                return;
+            }
+
+            const sliceAngle = (2 * Math.PI) / participants.length;
+            for (let i = 0; i < participants.length; i++) {
+                const startAngle = i * sliceAngle;
+                const endAngle = startAngle + sliceAngle;
+
+                ui.ctx.beginPath();
+                ui.ctx.moveTo(centerX, centerY);
+                ui.ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+                ui.ctx.fillStyle = colors[i % colors.length];
+                ui.ctx.fill();
+                ui.ctx.strokeStyle = "white"; ui.ctx.lineWidth = 3; ui.ctx.stroke();
+
+                ui.ctx.save();
+                ui.ctx.translate(centerX, centerY);
+                ui.ctx.rotate(startAngle + sliceAngle / 2);
+                ui.ctx.textAlign = "right";
+                ui.ctx.fillStyle = "white";
+                ui.ctx.font = "bold 15px Arial";
+                let text = participants[i];
+                if(text.length > 20) text = text.substring(0, 18) + "..";
+                ui.ctx.fillText(text, radius - 25, 5);
+                ui.ctx.restore();
+            }
+            ui.ctx.beginPath(); ui.ctx.arc(centerX, centerY, 40, 0, 2*Math.PI);
+            ui.ctx.fillStyle = "white"; ui.ctx.fill();
+            ui.ctx.strokeStyle = "#4F46E5"; ui.ctx.lineWidth = 6; ui.ctx.stroke();
+            ui.ctx.font = "24px Arial"; ui.ctx.fillStyle = "#4F46E5"; ui.ctx.textAlign = "center"; ui.ctx.fillText("★", centerX, centerY + 9);
+        }
+
+        function spin() {
+            const participants = ui.textarea.value.split('\n').map(s => s.trim()).filter(s => s !== "");
+            if (isSpinning || participants.length < 2) return alert("Se necesitan 2+ alumnos");
+
+            isSpinning = true;
+            ui.btnSpin.disabled = true;
+            ui.winner.innerText = "";
+
+            const winnerIndex = Math.floor(Math.random() * participants.length);
+            const winnerName = participants[winnerIndex];
+            
+            const sliceDegrees = 360 / participants.length;
+            const targetRotation = 270 - (winnerIndex * sliceDegrees + sliceDegrees/2);
+            const extraSpins = (5 + Math.random() * 5) * 360; 
+            const currentMod = currentRotation % 360;
+            let distance = extraSpins + targetRotation - currentMod;
+            if (distance < 0) distance += 360;
+            const finalRotation = currentRotation + distance;
+
+            ui.canvas.style.transform = `rotate(${finalRotation}deg)`;
+            currentRotation = finalRotation;
+
+            setTimeout(() => {
+                isSpinning = false;
+                ui.btnSpin.disabled = false;
+                ui.winner.innerText = "✨ " + winnerName + " ✨";
+                fireConfetti();
+
+                if (ui.removeSwitch.checked) {
+                    removeWinner(winnerName, participants);
+                }
+            }, 4000);
+        }
+
+        function removeWinner(name, currentParticipants) {
+            ui.historyBox.style.display = "block";
+            const div = document.createElement("div");
+            div.className = "history-item";
+            div.innerText = name;
+            ui.historyList.prepend(div);
+
+            const newList = currentParticipants.filter(p => p !== name).join('\n');
+            ui.textarea.value = newList;
+            drawWheel(); 
+            saveToCloud(); 
+        }
+
+        function fireConfetti() {
+            const count = 200;
+            const defaults = { origin: { y: 0.7 } };
+            function fire(particleRatio, opts) {
+                confetti(Object.assign({}, defaults, opts, { particleCount: Math.floor(count * particleRatio) }));
+            }
+            fire(0.25, { spread: 26, startVelocity: 55 });
+            fire(0.2, { spread: 60 });
+            fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
+            fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
+            fire(0.1, { spread: 120, startVelocity: 45 });
+        }
+    </script>
+</body>
+</html>
